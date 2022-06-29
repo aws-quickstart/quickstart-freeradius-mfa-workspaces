@@ -1,0 +1,1015 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates 2 Windows 2019 Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC. It then creates Directory Service (AD Connector), registers it for Amazon WorkSpaces, 
+  then launches Amazon WorkSpaces for a user. Lastly, it will launch a FreeRADIUS server that is used to enable MFA on the WorkSpace. Ensure the selected Availability Zones are supported by Amazon WorkSpaces.
+  **WARNING** This template creates Amazon EC2 Windows instances, WorkSpace, RDS Cluster and other related resources. You will be billed for the AWS resources used if you
+  create a stack from this template. (qs-xxxx)
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: 'Parameters for deploying self-managed AD into a new VPC'
+    Order: '2'
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E9101
+        - W9006
+      ignore_reason:
+        - "Execution part SSM Automation"
+        - "Referenced file does not have parameter, "
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network configuration
+        Parameters:
+          - AvailabilityZones
+          - NumberOfAZs
+          - VPCCIDR
+          - DHCPOptionSet
+          - PrivateSubnet1CIDR
+          - PrivateSubnet2CIDR
+          - PrivateSubnet3CIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PublicSubnet3CIDR
+      - Label:
+          default: Amazon EC2 configuration
+        Parameters:
+          - ADServer1InstanceType
+          - ADServer1NetBIOSName
+          - ADServer1PrivateIP
+          - ADServer2InstanceType
+          - ADServer2NetBIOSName
+          - ADServer2PrivateIP
+          - DataDriveSizeGiB
+          - KeyPairName
+          - RADIUSServerInstanceType
+      - Label:
+          default: Microsoft Active Directory Domain Services configuration
+        Parameters:
+          - DomainAdminUser
+          - DomainAdminPassword
+          - DomainDNSName
+          - DomainNetBIOSName
+          - CreateDefaultOUs
+          - TombstoneLifetime
+          - DeletedObjectLifetime
+      - Label:
+          default: Microsoft Active Directory Certificate Services configuration
+        Parameters:
+          - PKI
+          - CaServerInstanceType
+          - CaDataDriveSizeGiB
+          - OrCaServerNetBIOSName
+          - EntCaServerNetBIOSName
+          - CaKeyLength
+          - CaHashAlgorithm
+          - OrCaValidityPeriodUnits
+          - CaValidityPeriodUnits
+          - UseS3ForCRL
+          - S3CRLBucketName
+      - Label:
+          default: Microsoft Remote Desktop Gateway configuration
+        Parameters:
+          - NumberOfRDGWHosts
+          - RDGWInstanceType
+          - RDGWCIDR
+      - Label:
+          default: WorkSpaces and WorkSpaces Directory Configuration.
+        Parameters:
+          - DomainUser
+          - FirstName
+          - LastName
+          - EnableSelfService
+          - EnableWorkDocs
+          - Tenancy
+          - BundleId
+          - ComputeTypeName
+          - RunningMode
+          - UserVolumeEncryptionEnabled
+          - RootVolumeEncryptionEnabled
+          - VolumeEncryptionKey
+          - UserVolumeSizeGib
+          - RootVolumeSizeGib
+      - Label:
+          default: RADIUS Database and Server Configuration.
+        Parameters:
+          - LinOTPDBName
+          - LinOTPAdminPassword
+          - LinOTPReamlName
+          - RADIUSServerInstanceType
+      - Label:
+          default: AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+      - Label:
+          default: SNS/KMS configurations
+        Parameters:
+          - SNSKMSKeyAdmin
+          - QuickStartAdminEmail
+    ParameterLabels:
+      ADServer1InstanceType:
+        default: Domain Controller 1 Instance Type
+      ADServer1NetBIOSName:
+        default: Domain Controller 1 NetBIOS Name
+      ADServer1PrivateIP:
+        default: Domain Controller 1 Private IP Address
+      ADServer2InstanceType:
+        default: Domain Controller 2 Instance Type
+      ADServer2NetBIOSName:
+        default: Domain Controller 2 NetBIOS Name
+      ADServer2PrivateIP:
+        default: Domain Controller 2 Private IP Address
+      AvailabilityZones:
+        default: Availability Zones
+      CaDataDriveSizeGiB:
+        default: CA Data Drive Size
+      CaHashAlgorithm:
+        default: CA Hash Algorithm
+      CaKeyLength:
+        default: CA Key Length
+      CaServerInstanceType:
+        default: CA Instance Type
+      CaValidityPeriodUnits:
+        default: Enterprise Root or Subordinate CA Certificate Validity Period in Years
+      CreateDefaultOUs:
+        default: Create Default OUs
+      DHCPOptionSet:
+        default: Create a DHCP Options set
+      DataDriveSizeGiB:
+        default: SYSVOL and NTDS and Data Drive Size
+      DeletedObjectLifetime:
+        default: Set new Deleted Objects Lifetime
+      DomainAdminPassword:
+        default: Alternate Domain Admin Password
+      DomainAdminUser:
+        default: Alternate Domain Admin User Name
+      DomainDNSName:
+        default: Domain DNS Name
+      DomainNetBIOSName:
+        default: Domain NetBIOS Name
+      EntCaServerNetBIOSName:
+        default: Enterprise Root or Subordinate CA NetBIOS Name
+      KeyPairName:
+        default: Key Pair Name
+      NumberOfAZs:
+        default: Number of Availability Zones. You must choose Availability Zones supported by Amazon WorkSpaces. 
+      NumberOfRDGWHosts:
+        default: Number of RDGW Hosts
+      OrCaServerNetBIOSName:
+        default: Offline Root CA NetBIOS Name (Only Used For Two Tier PKI)
+      OrCaValidityPeriodUnits:
+        default: Offline Root CA Certificate Validity Period in Years (Only Used For Two Tier PKI)
+      PKI:
+        default: Deploy PKI Infrastructure
+      PrivateSubnet1CIDR:
+        default: Private Subnet 1 CIDR
+      PrivateSubnet2CIDR:
+        default: Private Subnet 2 CIDR
+      PrivateSubnet3CIDR:
+        default: (Optional) Private Subnet 3 CIDR
+      PublicSubnet1CIDR:
+        default: Public Subnet 1 CIDR
+      PublicSubnet2CIDR:
+        default: Public Subnet 2 CIDR
+      PublicSubnet3CIDR:
+        default: (Optional) Public Subnet 3 CIDR
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3BucketRegion:
+        default: Quick Start S3 Bucket Region
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      RDGWCIDR:
+        default: Allowed Remote Desktop Gateway External Access CIDR
+      RDGWInstanceType:
+        default: Remote Desktop Gateway Instance Type
+      DomainUser:
+        default: Normal Domain user that will be used to launch WorkSpace
+      FirstName:
+        default: WorkSpace user's First Name
+      LastName:
+        default: WorkSpace user's Last Name
+      EnableSelfService:
+        default: Enable Self Service on the WorkSpace Directory
+      EnableWorkDocs:
+        default: Enable WorkDocs on the WorkSpace Directory
+      Tenancy:
+        default: WorkSpaces VPC Tenancy
+      BundleId:
+        default: Enter the WorkSpace BundleID you want to use
+      ComputeTypeName:
+        default: 'Select the Workspaces Compute type. NOTE: Ensure the BundleId supports the compute type selected'
+      RunningMode:
+        default: WorkSpaces running mode
+      UserVolumeEncryptionEnabled:
+        default: Encrypt WorkSpace user volume
+      RootVolumeEncryptionEnabled:
+        default: Encrypt WorkSpace user volume
+      VolumeEncryptionKey:
+        default: Enter the WorkSpace KMS key to encrypt volumes 
+      UserVolumeSizeGib:
+        default: Size of the user volume storage for WorkSpace
+      RootVolumeSizeGib:
+        default: Size of the root volume storage for WorkSpace
+      LinOTPDBName:
+        default: Database Name for LinOTP configuration
+      S3CRLBucketName:
+        default: CA CRL S3 Bucket Name
+      TombstoneLifetime:
+        default: Set new Tombstone Lifetime
+      UseS3ForCRL:
+        default: Use S3 for CA CRL Location
+      VPCCIDR:
+        default: VPC CIDR
+      SNSKMSKeyAdmin:
+        default: ARN of Role for SNS Topic KMS Key Administration
+      QuickStartAdminEmail:
+        default: QuickStart Admin Email for notification to be sent to
+Parameters:
+  ADServer1InstanceType:
+    AllowedValues:
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m5.large
+    Description: Amazon EC2 instance type for the first Active Directory Domain Controller instance
+    Type: String
+  ADServer1NetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: DC1-ADC
+    Description: NetBIOS name of the first Active Directory Domain Controller (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ADServer1PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: Fixed private IP for the first Active Directory Domain Controller located in Availability Zone 1
+    Type: String
+  ADServer2InstanceType:
+    AllowedValues:
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m5.large
+    Description: Amazon EC2 instance type for the second Active Directory Domain Controller instance
+    Type: String
+  RADIUSServerInstanceType:
+    AllowedValues:
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: t3.large
+    Description: Amazon EC2 instance type for the RADIUS Server
+    Type: String
+  ADServer2NetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: DC2-ADC
+    Description: NetBIOS name of the second Active Directory Domain Controller (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  ADServer2PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.10
+    Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
+    Type: String
+  AvailabilityZones:
+    Description: 'List of Availability Zones to use for the subnets in the VPC. Note, The logical order is preserved and only 2 AZs are used for this deployment. You must choose Availability Zones supported by Amazon WorkSpaces.'
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+  CaDataDriveSizeGiB:
+    Default: '2'
+    Description: Size of the data drive in GiB for the CA instance(s)
+    Type: Number
+  CaHashAlgorithm:
+    AllowedValues:
+      - SHA256
+      - SHA384
+      - SHA512
+    Default: SHA256
+    Description: CA(s) Hash Algorithm for Siging Certificates
+    Type: String
+  CaKeyLength:
+    AllowedValues:
+      - '2048'
+      - '4096'
+    Default: '2048'
+    Description: CA(s) Cryptographic Provider Key Length
+    Type: String
+  CaServerInstanceType:
+    AllowedValues:
+      - t2.small
+      - t3.small
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+    Default: t3.medium
+    Description: Amazon EC2 instance type for the CA instance(s)
+    Type: String
+  CaValidityPeriodUnits:
+    Default: '5'
+    Description: Validity Period in Years
+    Type: String
+  CreateDefaultOUs:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description:
+      Domain Elevated Accounts, Domain Users, Domain Computers, Domain Servers, Domain Service Accounts, and Domain Groups OUs and set the default
+      users and computers containers to Domain Users and Domain Computers
+    Type: String
+  DHCPOptionSet:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'Yes'
+    Description: Do you want to create and apply a new DHCP Options Set
+    Type: String
+  DataDriveSizeGiB:
+    Default: '10'
+    Description: Size of SYSVOL and NTDS data drive in GiB
+    Type: Number
+  DeletedObjectLifetime:
+    Default: '180'
+    Description: The number of days before a deleted object is removed from the Active Directory recycling bin, minimum number is 2
+    Type: Number
+  DomainAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the account named above. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  DomainAdminUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Admin
+    Description: User name for the account that will be added as a Domain Administrator. This is separate from the default "Administrator" account
+    MaxLength: '25'
+    MinLength: '5'
+    Type: String
+  DomainDNSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Default: example.com
+    Description: Fully qualified domain name (FQDN) of the forest root domain e.g. example.com
+    MaxLength: '255'
+    MinLength: '2'
+    Type: String
+  DomainNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: example
+    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  EntCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ENTCA1
+    Description: NetBIOS name of the Enterprise Root or Subordinate CA server (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  KeyPairName:
+    Description: Public/private key pairs allow you to securely connect to your instance after it launches
+    Type: AWS::EC2::KeyPair::KeyName
+  NumberOfRDGWHosts:
+    AllowedValues:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+    Default: '1'
+    Description: Enter the number of Remote Desktop Gateway instances to create
+    Type: String
+  NumberOfAZs:
+    AllowedValues:
+      - '2'
+      - '3'
+    Default: '2'
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter
+    Type: String
+  OrCaServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: ORCA1
+    Description: NetBIOS name of the Offline Root CA server (Only Used For Two Tier PKI) (up to 15 characters)
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  OrCaValidityPeriodUnits:
+    Default: '10'
+    Description: Validity Period in Years (Only Used For Two Tier PKI)
+    Type: String
+  PKI:
+    AllowedValues:
+      - One-Tier
+      - Two-Tier
+      - 'No'
+    Default: 'No'
+    Description: Deploy Two Tier (Offline Root with Subordinate Enterprise CA) or One Tier (Enterprise Root CA) PKI Infrastructure
+    Type: String
+  PrivateSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/19
+    Description: CIDR block for private subnet 1 located in Availability Zone 1
+    Type: String
+  PrivateSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.32.0/19
+    Description: CIDR block for private subnet 2 located in Availability Zone 2
+    Type: String
+  PrivateSubnet3CIDR:
+    Default: ''
+    Description: CIDR block for private subnet 3 located in Availability Zone 3
+    Type: String
+  PublicSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.128.0/20
+    Description: CIDR Block for the public subnet 1 located in Availability Zone 1
+    Type: String
+  PublicSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.144.0/20
+    Description: CIDR Block for the public subnet 2 located in Availability Zone 2
+    Type: String
+  PublicSubnet3CIDR:
+    Default: ''
+    Description: CIDR Block for the public subnet 3 located in Availability Zone 3
+    Type: String
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription:
+      Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    Default: aws-quickstart
+    Description:
+      S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-)
+    Type: String
+  QSS3BucketRegion:
+    Default: us-east-1
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)
+    Default: quickstart-microsoft-activedirectory/
+    Description:
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/)
+    Type: String
+  RDGWInstanceType:
+    Description: Amazon EC2 instance type for the Remote Desktop Gateway instances
+    Type: String
+    Default: t3.large
+    AllowedValues:
+      - t2.small
+      - t2.medium
+      - t2.large
+      - t3.small
+      - t3.medium
+      - t3.large
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+  RDGWCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Description: Allowed CIDR Block for external access to the Remote Desktop Gateways
+    Type: String
+  S3CRLBucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: examplebucket
+    Description:
+      S3 bucket name for CA CRL(s) storage. Bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or
+      end with a hyphen (-)
+    Type: String
+  TombstoneLifetime:
+    Default: '180'
+    Description: The number of days before a deleted object is removed from Active Directory, minimum number is 2
+    Type: Number
+  UseS3ForCRL:
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+    Default: 'No'
+    Description: Store CA CRL(s) in an S3 bucket
+    Type: String
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Description: CIDR Block for the VPC
+    Type: String
+
+## WorkSpaces configuration
+  DomainUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: JaneDoe
+    Description: Username for the AD account that WorkSpace will be launched for
+    MaxLength: '25'
+    MinLength: '5'
+    Type: String
+  FirstName:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Jane
+    Description: Firstname of the domain user account that WorkSpace will be launched for.
+    MaxLength: '25'
+    MinLength: '2'
+    Type: String
+  LastName:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Doe
+    Description: Lastname of the Domain User Account that WorkSpace will be launched for.
+    MaxLength: '25'
+    MinLength: '2'
+    Type: String
+  EnableWorkDocs:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Indicates whether Amazon WorkDocs is enabled or disabled. If you have enabled this parameter and WorkDocs is not available in the Region, you will receive an OperationNotSupportedException error. Set EnableWorkDocs to disabled, and try again
+    Type: String
+  EnableSelfService:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether self-service capabilities are enabled or disabled
+    Type: String
+  Tenancy:
+    AllowedValues:
+      - 'DEDICATED'
+      - 'SHARED'
+    Default: 'SHARED'
+    Description: WorkSpace directory is dedicated or shared. To use Bring Your Own License (BYOL) images, this value must be set to DEDICATED and your Amazon Web Services account must be enabled for BYOL. If your account has not been enabled for BYOL, you will receive an InvalidParameterValuesException error
+    Type: String
+  RootVolumeEncryptionEnabled:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether the data stored on the root volume is encrypted.
+    Type: String
+  UserVolumeEncryptionEnabled:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether the data stored on the user volume is encrypted.
+    Type: String
+  VolumeEncryptionKey:
+    Type: String
+    Default: alias/aws/workspaces
+    Description: The symmetric AWS KMS key used to encrypt data stored on your WorkSpace. Amazon WorkSpaces does not support asymmetric KMS keys. you must specify the KMS Key ID you want to use.
+  RootVolumeSizeGib:
+    Default: '80'
+    Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
+    Type: Number
+  UserVolumeSizeGib:
+    Default: '50'
+    Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
+    Type: Number
+  BundleId:
+    Default: 'wsb-gm4d5tx2v'
+    AllowedPattern: '^wsb-[0-9a-z]{8,63}$'
+    Description: The identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles.
+    Type: String
+  ComputeTypeName:
+    Default: 'PERFORMANCE'
+    AllowedValues:
+      - VALUE
+      - STANDARD
+      - POWERPRO
+      - POWER
+      - PERFORMANCE
+      - GRAPHICSPRO
+      - GRAPHICS
+    Description: The compute type valid values are - VALUE | STANDARD | PERFORMANCE | POWER | GRAPHICS | POWERPRO | GRAPHICSPRO
+    Type: String
+  RunningMode:
+    Default: 'AUTO_STOP'
+    AllowedValues:
+      - ALWAYS_ON
+      - AUTO_STOP
+    Description: Select the Workspaces running mode
+    Type: String
+
+    ## RADIUS configuration
+  LinOTPDBName:
+    Type: String
+    Default: LINOTP
+    Description: Specify an RDS Database name.
+  LinOTPAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the account used to manage user enrollment, management of LinOTP portal. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  LinOTPReamlName:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: WSRealm
+    Description: Realm Name for LinOTP/LDAP Integration. Default Name set to WSRealm.
+    MaxLength: '12'
+    MinLength: '5'
+    NoEcho: 'true'
+    Type: String
+  
+    ## SNS Confgs
+  SNSKMSKeyAdmin:
+    Description: 'Admin Role ARN for SNS Topic KMS Key'
+    Type: String
+    AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
+  QuickStartAdminEmail:
+    Default: gmindpro@gmail.com
+    Description: 'QuickStart Admin Email for notification to be sent to'
+    Type: String
+    AllowedPattern: '[^@]+@[^@]+\.[^@]+'
+
+Conditions:
+  IncludeRDGW: !Not [!Equals [!Ref NumberOfRDGWHosts, '0']]
+  IsTwoAz: !Equals [!Ref 'NumberOfAZs', '2']
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  WorkSpaceEncryptRootVol: !Equals [!Ref RootVolumeEncryptionEnabled, 'true']
+  WorkSpaceEncryptUserVol: !Equals [!Ref UserVolumeEncryptionEnabled, 'true']
+  KMSVolEncrptionCheck: !And [ Condition: WorkSpaceEncryptRootVol, Condition: WorkSpaceEncryptUserVol]
+Rules:
+  CheckSupportedInstances:
+    RuleCondition: !Or
+      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer1InstanceType']
+      - !Contains [[m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge], !Ref 'ADServer2InstanceType']
+    Assertions:
+      - Assert: !Not [!Contains [[eu-west-3], !Ref 'AWS::Region']]
+        AssertDescription: M4 instances are not available in the Paris region
+  S3CRLBucketNameValidation:
+    RuleCondition: !And
+      - !Equals [!Ref UseS3ForCRL, 'Yes']
+      - !Not [!Equals [!Ref PKI, 'No']]
+    Assertions:
+      - AssertDescription: CRL BucketName cannot must be valid BucketName
+        Assert: !Not [!Equals [!Ref S3CRLBucketName, 'examplebucket']]
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template.yaml'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        AvailabilityZones: !Join [',', !Ref 'AvailabilityZones']
+        NumberOfAZs: !Ref 'NumberOfAZs'
+        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
+        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
+        PrivateSubnet3ACIDR: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !Ref 'PrivateSubnet3CIDR'
+        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
+        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
+        PublicSubnet3CIDR: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !Ref 'PublicSubnet3CIDR'
+        VPCCIDR: !Ref 'VPCCIDR'
+  ADStack:
+    DependsOn: VPCStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-activedirectory/templates/ad-1.template'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        ADServer1InstanceType: !Ref 'ADServer1InstanceType'
+        ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
+        ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
+        ADServer2InstanceType: !Ref 'ADServer2InstanceType'
+        ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
+        ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        DomainAdminPassword: !Ref 'DomainAdminPassword'
+        DomainAdminUser: !Ref 'DomainAdminUser'
+        DomainDNSName: !Ref 'DomainDNSName'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        KeyPairName: !Ref 'KeyPairName'
+        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-activedirectory/'
+        VPCCIDR: !Ref 'VPCCIDR'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+  
+  RDGWStack:
+    Condition: IncludeRDGW
+    DependsOn: ADStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-domain.template'
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        DomainAdminPassword: !Ref 'DomainAdminPassword'
+        DomainAdminUser: !Ref 'DomainAdminUser'
+        DomainDNSName: !Ref 'DomainDNSName'
+        DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        KeyPairName: !Ref 'KeyPairName'
+        NumberOfRDGWHosts: !Ref 'NumberOfRDGWHosts'
+        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/'
+        RDGWInstanceType: !Ref 'RDGWInstanceType'
+        RDGWCIDR: !Ref 'RDGWCIDR'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+
+  Macro:
+    Type: AWS::CloudFormation::Macro
+    Properties:
+      Name: WorkSpaceDefaultRoleMacro
+      FunctionName: !GetAtt WSIAMFunc.Arn
+  WSIAMFunc:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |  
+          import boto3
+          import json
+          import logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          client = boto3.client('iam')
+          def handler(event, context):
+            try:
+              fragment = event['fragment']
+              client.get_role(RoleName='workspaces_DefaultRole')
+              resp = {'requestId': event['requestId'], 'status': 'success','fragment': fragment}
+              return resp      
+            except client.exceptions.NoSuchEntityException:
+              resources_to_be_modified = {}
+              resources_to_be_modified = event['fragment']['Resources']
+              resources_to_be_modified['WorkspaceDefaultRole'] = {'Properties':{'RoleName':'workspaces_DefaultRole','Tags':[{'Key':'Created_By','Value':'WorkSpacesQuickstart_SC1'}],'ManagedPolicyArns':['arn:aws:iam::aws:policy/AmazonWorkSpacesServiceAccess','arn:aws:iam::aws:policy/AmazonWorkSpacesSelfServiceAccess'],'AssumeRolePolicyDocument':{'Statement':[{'Action':['sts:AssumeRole'],'Effect':'Allow','Principal':{'Service':['workspaces.amazonaws.com']}}],'Version':'2012-10-17'},'Path':'/'}}
+              resources_to_be_modified['WorkspaceDefaultRole']['Type'] = 'AWS::IAM::Role'
+              resources_to_be_modified['CleanUpCustomResource']['DependsOn'] = 'WorkspaceDefaultRole'
+              event['fragment']['Resources'] = resources_to_be_modified
+              resp = {'requestId': event['requestId'], 'status': 'success','fragment': fragment}
+              return resp
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: cloudformation.amazonaws.com
+      FunctionName: !GetAtt WSIAMFunc.Arn
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-lambda-execution-role-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+          - Effect: Allow
+            Action:
+            - iam:GetRole
+            Resource:
+            - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
+  
+  SNSTopicKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS Key for SNS Topic'
+      EnableKeyRotation: true
+      PendingWindowInDays: 20
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: key-default-1
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow administration of the key
+            Effect: Allow
+            Principal:
+              AWS: !Ref SNSKMSKeyAdmin
+            Action:
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          - Sid: Allow use of the key
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
+            Action:
+              - 'kms:DescribeKey'
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey'
+              - 'kms:GenerateDataKeyWithoutPlaintext'
+            Resource: '*'
+  SNSStackStatusTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${AWS::StackName}-SNS-Topic'
+      KmsMasterKeyId: !GetAtt SNSTopicKMSKey.KeyId
+      Subscription:
+        - Endpoint: !Ref QuickStartAdminEmail
+          Protocol: email
+  SNSDeliveryLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: sns-delivery-lambda-execution-role-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              Resource:
+              - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+            - Effect: Allow
+              Action:
+               -  'sns:Publish'
+              Resource:
+               -  !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-SNS-Topic'
+  WorkSpaceStack:
+    DependsOn: 
+      - ADStack
+      - Macro
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      ### Temporary Template URL
+      TemplateURL: https://ws-qs.s3.amazonaws.com/workspace-1.template.yaml
+      Parameters:
+        DomainUser: !Ref 'DomainUser'
+        FirstName: !Ref 'FirstName'
+        LastName: !Ref 'LastName'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+        ADServer1PrivateIP: !Ref 'ADServer1PrivateIP'
+        ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        BundleId: !Ref 'BundleId'
+        DomainDNSName: !Ref 'DomainDNSName'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
+        ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
+        EnableWorkDocs: !Ref 'EnableWorkDocs'
+        EnableSelfService: !Ref 'EnableSelfService'
+        Tenancy: !Ref 'Tenancy'
+        ComputeTypeName: !Ref 'ComputeTypeName'
+        RunningMode: !Ref 'RunningMode'
+        RootVolumeSizeGib: !Ref 'RootVolumeSizeGib'
+        UserVolumeSizeGib: !Ref 'UserVolumeSizeGib'
+        VolumeEncryptionKey: !If [KMSVolEncrptionCheck, !Ref 'VolumeEncryptionKey', !Ref AWS::NoValue]
+        UserVolumeEncryptionEnabled: !Ref 'UserVolumeEncryptionEnabled'
+        RootVolumeEncryptionEnabled: !Ref 'RootVolumeEncryptionEnabled'
+        ADAltUserSecParamName: !GetAtt 'ADStack.Outputs.ADSecretsArn'
+        DC1InstanceId: !GetAtt 'ADStack.Outputs.DC1InstanceId'
+        DC2InstanceId: !GetAtt 'ADStack.Outputs.DC2InstanceId'
+        DomainControllersSGID: !GetAtt 'ADStack.Outputs.DomainControllersSGID'
+        PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
+        PrivateSubnet3CIDR: !Ref PrivateSubnet3CIDR
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PublicSubnet3CIDR: !Ref PublicSubnet3CIDR
+        SNSDeliveryLambdaExecutionRoleExportName: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
+        SNSStackStatusTopicExportName: !Sub '${AWS::StackName}-SNSStackStatusTopic'
+        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
+        SNSStackStatusTopicExportValue: !Ref SNSStackStatusTopic
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+  RadiusStack:
+    DependsOn: 
+      - ADStack
+      - Macro
+      - WorkSpaceStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://ws-qs.s3.amazonaws.com/radius-1.template.yaml
+      Parameters:
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+        PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+        PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
+        DomainUser: !Ref 'DomainUser'
+        DomainUserSecretsArn: !GetAtt 'WorkSpaceStack.Outputs.DomainUserSecretsArn'
+        VPCCIDR: !Ref 'VPCCIDR'
+        LinOTPDBName: !Ref 'LinOTPDBName'
+        LinOTPAdminPassword: !Ref 'LinOTPAdminPassword'
+        LinOTPReamlName: !Ref 'LinOTPReamlName'
+        KeyName: !Ref 'KeyPairName'
+        RADIUSServerInstanceType: !Ref 'RADIUSServerInstanceType'
+        SNSDeliveryLambdaExecutionRole: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
+        SNSStackStatusTopic: !Sub '${AWS::StackName}-SNSStackStatusTopic'

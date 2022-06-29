@@ -1,0 +1,113 @@
+project:
+  shorten_stack_name: true
+  name: quickstart-workspace-mfa
+  owner: gmindpro@gmail.com
+  package_lambda: false
+  regions:
+  # - ap-northeast-1
+  # - ap-northeast-2
+  # - ap-south-1
+  # - ap-southeast-1
+  # - ap-southeast-2
+  # - ca-central-1
+  # - eu-central-1
+  # - eu-west-1
+  # - eu-west-2
+  # - eu-west-3
+  # - sa-east-1
+  - us-west-2
+  - us-east-1
+  template: ./templates/ws-master-2.template
+  s3_regional_buckets:  true
+tests:
+  SC1:
+    parameters:
+      ADServer1InstanceType: t3.large
+      ADServer1NetBIOSName: DC1
+      ADServer1PrivateIP: 10.0.0.10
+      ADServer2NetBIOSName: DC2
+      ADServer2PrivateIP: 10.0.32.10
+      AvailabilityZones: us-west-2a,us-west-2b
+      DomainAdminPassword: $[taskcat_genpass_16]
+      DomainAdminUser: Admin
+      DomainDNSName: funfactory.com
+      DomainNetBIOSName: funfactory
+      KeyPairName: taskcatTest
+      NumberOfRDGWHosts: '0'
+      PrivateSubnet1CIDR: 10.0.0.0/19
+      PrivateSubnet2CIDR: 10.0.32.0/19
+      PublicSubnet1CIDR: 10.0.128.0/20
+      PublicSubnet2CIDR: 10.0.144.0/20
+      RDGWInstanceType: t2.large
+      RDGWCIDR: 10.0.0.0/16
+      VPCCIDR: 10.0.0.0/16
+      QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+      QSS3KeyPrefix: quickstart-workspace-mfa/
+      PKI: 'No'
+      EntCaServerInstanceType: t3.large
+      EntCaDataDriveSizeGiB: '2'
+      EntCaServerNetBIOSName: 'EntCa1'
+      EntCaKeyLength: '2048'
+      EntCaHashAlgorithm: 'SHA256'
+      EntCaValidityPeriodUnits: '5'
+      CreateDefaultOUs: 'Yes'
+      TombstoneLifetime: '60'
+      DeletedObjectLifetime: '60'
+      DHCPOptionSet: 'Yes'
+      LinOTPAdminPassword: $[taskcat_genpass_16]
+      LinOTPDBName: LINOTP
+      LinOTPReamlName: MyADRealm
+      EnableSelfService: 'true'
+      EnableWorkDocs: 'false'
+      SNSKMSKeyAdmin: 'arn:aws:iam::585184631437:role/TaskCatAdmin'
+    regions:
+    # - eu-west-1
+    # - eu-west-2
+    # - sa-east-1
+    # - us-east-1
+    - us-west-2
+    template: ./templates/ws-master-1.template
+  SC2:
+    parameters:
+      AvailabilityZones: us-east-1b,us-east-1c
+      DomainAdminPassword: $[taskcat_genpass_16]
+      DomainAdminUser: Admin
+      DomainDNSName: nbafinals.com
+      DomainNetBIOSName: nbafinals
+      KeyPairName: taskcatTest
+      NumberOfRDGWHosts: '0'
+      PrivateSubnet1CIDR: 10.0.0.0/19
+      PrivateSubnet2CIDR: 10.0.32.0/19
+      PublicSubnet1CIDR: 10.0.128.0/20
+      PublicSubnet2CIDR: 10.0.144.0/20
+      RDGWInstanceType: t2.large
+      RDGWCIDR: 10.0.0.0/16
+      VPCCIDR: 10.0.0.0/16
+      QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+      QSS3KeyPrefix: quickstart-workspace-mfa/
+      PKI: 'No'
+      EntCaServerInstanceType: t3.large
+      EntCaDataDriveSizeGiB: '2'
+      EntCaServerNetBIOSName: 'EntCa1'
+      EntCaKeyLength: '2048'
+      EntCaHashAlgorithm: 'SHA256'
+      EntCaValidityPeriodUnits: '5'
+      CreateDefaultOUs: 'Yes'
+      TombstoneLifetime: '60'
+      DeletedObjectLifetime: '60'
+      DHCPOptionSet: 'Yes'
+      LinOTPAdminPassword: $[taskcat_genpass_16]
+      LinOTPDBName: LINOTP
+      LinOTPReamlName: MyADRealm
+      EnableSelfService: 'true'
+      EnableWorkDocs: 'false'
+      SNSKMSKeyAdmin: 'arn:aws:iam::585184631437:role/TaskCatAdmin'
+    regions:
+    # - eu-west-1
+    # - eu-west-2
+    # - sa-east-1
+    - us-east-1
+    # - us-west-2
+    template: ./templates/ws-master-2.template
