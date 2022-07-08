@@ -3,3 +3,6 @@ taskcat_outputs/*
 .taskcat/*
 .taskcat-*.yml
 .DS_Store
+templates/.DS_Store
+submodules/.DS_Store
+image/.DS_Store
