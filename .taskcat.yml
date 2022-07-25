@@ -1,7 +1,7 @@
 project:
   shorten_stack_name: true
   name: quickstart-workspace-mfa
-  owner: gmindpro@gmail.com
+  owner: workspace@example.com
   package_lambda: false
   regions:
   # - ap-northeast-1
@@ -17,7 +17,7 @@ project:
   # - sa-east-1
   - us-west-2
   - us-east-1
-  template: ./templates/ws-master-2.template
+  template: ./templates/ws-master-2.template.yaml
   s3_regional_buckets:  true
 tests:
   SC1:
@@ -43,7 +43,7 @@ tests:
       VPCCIDR: 10.0.0.0/16
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
-      QSS3KeyPrefix: quickstart-workspace-mfa/
+      QSS3KeyPrefix: quickstart-freeradius-mfa-workspaces/
       PKI: 'No'
       EntCaServerInstanceType: t3.large
       EntCaDataDriveSizeGiB: '2'
@@ -67,7 +67,7 @@ tests:
     # - sa-east-1
     # - us-east-1
     - us-west-2
-    template: ./templates/ws-master-1.template
+    template: ./templates/ws-master-1.template.yaml
   SC2:
     parameters:
       AvailabilityZones: us-east-1b,us-east-1c
@@ -86,7 +86,7 @@ tests:
       VPCCIDR: 10.0.0.0/16
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
-      QSS3KeyPrefix: quickstart-workspace-mfa/
+      QSS3KeyPrefix: quickstart-freeradius-mfa-workspaces/
       PKI: 'No'
       EntCaServerInstanceType: t3.large
       EntCaDataDriveSizeGiB: '2'
@@ -110,4 +110,4 @@ tests:
     # - sa-east-1
     - us-east-1
     # - us-west-2
-    template: ./templates/ws-master-2.template
+    template: ./templates/ws-master-2.template.yaml
