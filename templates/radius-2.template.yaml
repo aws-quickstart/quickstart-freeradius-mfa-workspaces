@@ -213,7 +213,9 @@ Resources:
               Parameters:
                 commands:
                   - sudo amazon-linux-extras install epel -y
-                  - sudo yum localinstall http://linotp.org/rpm/el7/linotp/x86_64/Packages/LinOTP_repos-1.1-1.el7.x86_64.rpm -y
+                  - sudo yum localinstall http://dist.linotp.org/rpm/el7/linotp/x86_64/Packages/LinOTP_repos-1.1-1.el7.x86_64.rpm -y
+                  - sudo sed -i 's,http://linotp.org/rpm/el7/dependencies/x86_64, http://dist.linotp.org/rpm/el7/dependencies/x86_64,g' /etc/yum.repos.d/linotp.repo
+                  - sudo sed -i 's,http://linotp.org/rpm/el7/linotp/x86_64, http://dist.linotp.org/rpm/el7/linotp/x86_64,g' /etc/yum.repos.d/linotp.repo
               DocumentName: AWS-RunShellScript
               InstanceIds:
                 - '{{InstanceId}}'
