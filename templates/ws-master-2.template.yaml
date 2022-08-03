@@ -4,7 +4,7 @@ Description: >-
   Microsoft AD Directory Service into private subnets in separate Availability Zones inside a VPC, as well as Remote Desktop Gateway instances and
   managed NAT gateways into the public subnet for each Availability Zone. Amazon WorkSpace and RADIUS server will be launched in the selected subnets. Ensure the selected Availability Zones are supported by Amazon WorkSpaces. 
   The default Domain Administrator user is 'admin'. This is the user a WorkSpace will be created for. **WARNING** This template creates Amazon EC2 Windows instances, WorkSpace, RDS Cluster & other related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-xxxx)
+  create a stack from this template. (qs-1t9sl8r1u)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
@@ -207,7 +207,7 @@ Metadata:
       SNSKMSKeyAdmin:
         default: ARN of Role for SNS Topic KMS Key Administration
       QuickStartAdminEmail:
-        default: QuickStart Admin Email for notification to be sent to
+        default: The QuickStart Admin Email that notification will be sent to upon Successful creation
 Parameters:
   ADEdition:
     AllowedValues:
@@ -588,7 +588,7 @@ Parameters:
     
   QuickStartAdminEmail:
     Default: workspace@example.com
-    Description: 'QuickStart Admin Email for notification to be sent to'
+    Description: 'The QuickStart Admin Email that notification will be sent to upon Successful creation'
     Type: String
     AllowedPattern: '[^@]+@[^@]+\.[^@]+'
     

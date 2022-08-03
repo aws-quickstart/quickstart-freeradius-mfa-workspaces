@@ -4,7 +4,7 @@ Transform:
 Description: >-
   This template creates a domain user and provisions an Amazon WorkSpace for that user. 
   **WARNING** This template creates Amazon WorkSpace, SSM automation, Lambda Function and related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-xxxx)
+  create a stack from this template. (qs-1t9sl8r2t)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for provisioning WorkSpace in AD Connector Directory Service'

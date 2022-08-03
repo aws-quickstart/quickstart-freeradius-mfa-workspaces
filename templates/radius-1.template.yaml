@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates Aurora RDS database, configures LinOTP and FreeRADIUS server. 
-  **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-xxxx)
+  This template creates Aurora RDS database, integrates LinOTP with the deployed Active Directory and configures FreeRADIUS server. The created domain user credentials will be used to configure AD integration. 
+  **WARNING** This template creates Amazon EC2 Linux instance, RDS database and related resources. You will be billed for the AWS resources used if you
+  create a stack from this template. (qs-1t9sl8r34)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'

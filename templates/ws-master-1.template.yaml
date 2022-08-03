@@ -3,7 +3,7 @@ Description: >-
   This template creates 2 Windows 2019 Active Directory Domain Controllers into private subnets in separate Availability Zones inside a VPC. It then creates Directory Service (AD Connector), registers it for Amazon WorkSpaces, 
   then launches Amazon WorkSpaces for a user. Lastly, it will launch a FreeRADIUS server that is used to enable MFA on the WorkSpace. Ensure the selected Availability Zones are supported by Amazon WorkSpaces.
   **WARNING** This template creates Amazon EC2 Windows instances, WorkSpace, RDS Cluster and other related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-xxxx)
+  create a stack from this template. (qs-1t9sl8qtu)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying self-managed AD into a new VPC'
@@ -658,7 +658,7 @@ Parameters:
     AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
   QuickStartAdminEmail:
     Default: workspaces@example.com
-    Description: 'QuickStart Admin Email for notification to be sent to'
+    Description: 'The QuickStart Admin Email that notification will be sent to upon Successful creation'
     Type: String
     AllowedPattern: '[^@]+@[^@]+\.[^@]+'
 
