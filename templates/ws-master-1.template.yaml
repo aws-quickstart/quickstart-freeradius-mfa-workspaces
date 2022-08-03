@@ -657,7 +657,7 @@ Parameters:
     Type: String
     AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
   QuickStartAdminEmail:
-    Default: gmindpro@gmail.com
+    Default: workspaces@example.com
     Description: 'QuickStart Admin Email for notification to be sent to'
     Type: String
     AllowedPattern: '[^@]+@[^@]+\.[^@]+'

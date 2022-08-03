@@ -49,7 +49,7 @@ tests:
       LinOTPReamlName: MyADRealm
       EnableSelfService: 'true'
       EnableWorkDocs: 'false'
-      SNSKMSKeyAdmin: 'arn:aws:iam::585184631437:role/TaskCatAdmin'
+      SNSKMSKeyAdmin: 'arn:aws:iam::123456789012:role/TaskCatAdmin'
     regions:
     - us-west-2
     template: ./templates/ws-master-1.template.yaml
@@ -88,7 +88,7 @@ tests:
       LinOTPReamlName: MyADRealm
       EnableSelfService: 'true'
       EnableWorkDocs: 'false'
-      SNSKMSKeyAdmin: 'arn:aws:iam::585184631437:role/TaskCatAdmin'
+      SNSKMSKeyAdmin: 'arn:aws:iam::123456789012:role/TaskCatAdmin'
     regions:
     - us-east-1
     template: ./templates/ws-master-2.template.yaml
