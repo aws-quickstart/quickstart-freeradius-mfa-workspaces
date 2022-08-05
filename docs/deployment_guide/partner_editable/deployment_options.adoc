@@ -2,7 +2,9 @@
 
 This Quick Start provides the following deployment options:
 
-* http://qs_launch_permalink[Deploy {partner-product-short-name} into a new VPC^]. This option builds a new AWS environment that consists of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys {partner-product-short-name} into this new VPC.
-* http://qs_launch_permalink[Deploy {partner-product-short-name} into an existing VPC^]. This option provisions {partner-product-short-name} in your existing AWS infrastructure.
+* http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new Self-Managed AD and VPC^]. This option builds a new AWS environment that consists of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys {A self-managed Active Directory, Amazon WorkSpaces and FreeRADIUS Server} into this new VPC. The self-managed AD is deployed on EC2 instances. This domain is used to create a AD Connector Directory Service, which is then used to register WorkSpaces. Finally, a FreeRADIUS server is deployed and enabled on the Directory Service. 
+* http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new AWS Managed AD and VPC^]. This option builds a new AWS environment that consists of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys {A new AWS Managed AD Directory Service, Amazon WorkSpaces and FreeRADIUS Server} into this new VPC. The self-managed AD is deployed on EC2 instances. The created Directory Service is used to register WorkSpaces. Finally, a FreeRADIUS server is deployed and enabled on the Directory Service. 
+* http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new Self-Managed AD and existing VPC^]. This option provisions {partner-product-short-name} in your existing AWS infrastructure.
+* http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new AWS Managed AD and existing VPC^]. This option provisions {partner-product-short-name} in your existing AWS infrastructure.
 
-This Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and {partner-product-short-name} settings.
+This Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and FreeRADIUS MFA settings.
