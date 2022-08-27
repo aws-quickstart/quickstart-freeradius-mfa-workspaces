@@ -1,0 +1,584 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This template creates a VPC infrastructure for a multi-AZ, multi-tier
+  deployment of a Windows based Application infrastructure. It deploys a managed
+  Microsoft AD Directory Service into private subnets in separate Availability
+  Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
+  NAT gateways into the public subnet for each Availability Zone. The default
+  Domain Administrator user is 'admin'.  For adding members to the domain,
+  ensure that they are launched into the domain member security group created by
+  this template and then configure them to use the AD instances fixed private IP
+  addresses as the DNS server. **WARNING** This template creates Amazon EC2
+  Windows instance and related resources. You will be billed for the AWS
+  resources used if you create a stack from this template. (qs-1rtnidq31)
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+  QuickStartDocumentation:
+    EntrypointName: Parameters for deploying AWS Managed Microsoft AD into a new VPC
+    Order: '5'
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: WorkSpaces and WorkSpaces Directory Configuration.
+        Parameters:
+          - DomainUser
+          - DomainAdminPassword
+          - FirstName
+          - LastName
+          - NewUserPassword
+          - DirectoryID
+          - BindDN
+          - BaseDN
+          - DomainControllerPrivateIP
+          - Tenancy
+          - EnableSelfService
+          - EnableWorkDocs
+          - BundleId
+          - ComputeTypeName
+          - RunningMode
+          - UserVolumeEncryptionEnabled
+          - RootVolumeEncryptionEnabled
+          - VolumeEncryptionKey
+          - UserVolumeSizeGib
+          - RootVolumeSizeGib
+      - Label:
+          default: RADIUS Server and Database Configuration.
+        Parameters:
+          - KeyPairName
+          - VPCID
+          - VPCCIDR
+          - PrivateSubnet1ID
+          - PrivateSubnet2ID
+          - PublicSubnet1ID
+          - PublicSubnet2ID
+          - RADIUSServerInstanceType
+          - LinOTPDBName
+          - LinOTPAdminPassword
+          - LinOTPReamlName
+      - Label:
+          default: AWS Quick Start configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+      - Label:
+          default: SNS/KMS configurations
+        Parameters:
+          - SNSKMSKeyAdmin
+          - QuickStartAdminEmail
+    ParameterLabels:
+      VPCCIDR:
+        default: VPC CIDR For Radius
+      KeyPairName:
+        default: Key Pair Name
+      DomainUser:
+        default: Domain admin user required launch workspace user
+      FirstName:
+        default: First Name of the user to be created to launch workspace
+      LastName:
+        default: Last Name of the user to be created to launch workspace
+      NewUserPassword:
+        default: Password to be set for user to be created to launch workspace
+      DirectoryID:
+        default: Directory ID for WorkSpaces
+      DomainControllerPrivateIP:
+        default: Private IP for management instance
+      BindDN:
+        default: BindDN for AD
+      BaseDN:
+        default: BaseDN for AD
+      DomainAdminPassword:
+        default: Domain Admin Password
+      Tenancy:
+        default: WorkSpaces VPC Tenancy
+      BundleId:
+        default: Enter the WorkSpace BundleID you want to use
+      ComputeTypeName:
+        default: 'Select the Workspaces Compute type. NOTE: Ensure the BundleId supports the compute type selected'
+      RunningMode:
+        default: WorkSpaces running mode
+      UserVolumeEncryptionEnabled:
+        default: Encrypt WorkSpace user volume
+      RootVolumeEncryptionEnabled:
+        default: Encrypt WorkSpace user volume
+      VolumeEncryptionKey:
+        default: Enter the WorkSpace KMS key to encrypt volumes 
+      UserVolumeSizeGib:
+        default: Size of the user volume storage for WorkSpace
+      RootVolumeSizeGib:
+        default: Size of the root volume storage for WorkSpace
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket region
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      RDGWCIDR:
+        default: Allowed Remote Desktop Gateway External Access CIDR
+      RDGWInstanceType:
+        default: Remote Desktop Gateway Instance Type
+      S3CRLBucketName:
+        default: CA CRL S3 Bucket Name
+      UseS3ForCRL:
+        default: Use S3 for CA CRL Location
+      SNSKMSKeyAdmin:
+        default: ARN of Role for SNS Topic KMS Key Administration
+      QuickStartAdminEmail:
+        default: QuickStart Admin Email for notification to be sent to
+Parameters:
+  KeyPairName:
+    Description: >-
+      Public/private key pairs allow you to securely connect to your instance
+      after it launches
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    
+##### WorkSpaces Configuration
+  DomainUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: JaneDoe
+    Description: Username for the AD account that WorkSpace will be launched for
+    MaxLength: '25'
+    MinLength: '5'
+    Type: String
+  DomainAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  NewUserPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the WorkSpace user account. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  FirstName:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Jane
+    Description: Firstname of the domain user account that WorkSpace will be launched for.
+    MaxLength: '25'
+    MinLength: '2'
+    Type: String
+  LastName:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: Doe
+    Description: Lastname of the Domain User Account that WorkSpace will be launched for.
+    MaxLength: '25'
+    MinLength: '2'
+    Type: String
+  DomainControllerPrivateIP:
+    Default: '10.0.0.1'
+    Description: Private IP of mangment instance
+    MaxLength: '25'
+    MinLength: '8'
+    Type: String
+  DirectoryID:
+    Default: 'd-123abc'
+    Description: Directory ID for WorkSpaces
+    MaxLength: '25'
+    MinLength: '8'
+    Type: String
+  BindDN:
+    Default: 'BindDN'
+    Description: BindDN for AD
+    Type: String
+  BaseDN:
+    Default: 'BaseDN'
+    Description: BaseDN for AD
+    Type: String
+  Tenancy:
+    AllowedValues:
+      - 'DEDICATED'
+      - 'SHARED'
+    Default: 'SHARED'
+    Description: WorkSpace directory is dedicated or shared. To use Bring Your Own License (BYOL) images, this value must be set to DEDICATED and your Amazon Web Services account must be enabled for BYOL. If your account has not been enabled for BYOL, you will receive an InvalidParameterValuesException error
+    Type: String
+  EnableWorkDocs:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Indicates whether Amazon WorkDocs is enabled or disabled. If you have enabled this parameter and WorkDocs is not available in the Region, you will receive an OperationNotSupportedException error. Set EnableWorkDocs to disabled, and try again
+    Type: String
+  EnableSelfService:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether self-service capabilities are enabled or disabled
+    Type: String
+  RootVolumeEncryptionEnabled:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether the data stored on the root volume is encrypted.
+    Type: String
+  UserVolumeEncryptionEnabled:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: Indicates whether the data stored on the user volume is encrypted.
+    Type: String
+  VolumeEncryptionKey:
+    Type: String
+    Default: alias/aws/workspaces
+    Description: The symmetric AWS KMS key used to encrypt data stored on your WorkSpace. Amazon WorkSpaces does not support asymmetric KMS keys. you must specify the KMS Key ID you want to use.
+  RootVolumeSizeGib:
+    Default: '80'
+    Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
+    Type: Number
+  UserVolumeSizeGib:
+    Default: '50'
+    Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
+    Type: Number
+  BundleId:
+    Default: 'wsb-gm4d5tx2v'
+    AllowedPattern: '^wsb-[0-9a-z]{8,63}$'
+    Description: The identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles.
+    Type: String
+  ComputeTypeName:
+    Default: 'PERFORMANCE'
+    AllowedValues:
+      - VALUE
+      - STANDARD
+      - POWERPRO
+      - POWER
+      - PERFORMANCE
+      - GRAPHICSPRO
+      - GRAPHICS
+    Description: The compute type valid values are - VALUE | STANDARD | PERFORMANCE | POWER | GRAPHICS | POWERPRO | GRAPHICSPRO
+    Type: String
+  RunningMode:
+    Default: 'AUTO_STOP'
+    AllowedValues:
+      - ALWAYS_ON
+      - AUTO_STOP
+    Description: Select the Workspaces running mode
+    Type: String
+  QSS3BucketName:
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
+    ConstraintDescription: >-
+      Quick Start bucket name can include numbers, lowercase letters, uppercase
+      letters, and hyphens (-). It cannot start or end with a hyphen (-)
+    Default: aws-quickstart
+    Description: >-
+      S3 bucket name for the Quick Start assets. Quick Start bucket name can
+      include numbers, lowercase letters, uppercase letters, and hyphens (-). It
+      cannot start or end with a hyphen (-)
+    Type: String
+  QSS3BucketRegion:
+    Default: us-east-1
+    Description: >-
+      The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted.
+      When using your own bucket, you must specify this value
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: '^[0-9a-zA-Z-/]*$'
+    ConstraintDescription: >-
+      Quick Start key prefix can include numbers, lowercase letters, uppercase
+      letters, hyphens (-), and forward slash (/)
+    Default: quickstart-microsoft-activedirectory/
+    Description: >-
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can
+      include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/)
+    Type: String
+
+   ##### RADIUS Server Configuration
+  VPCID:
+    Default: 'vpc-xxxxx'
+    Description: VPC ID for Workspaces
+    Type: String
+  VPCCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Description: CIDR Block for the VPC
+    Type: String
+  PrivateSubnet1ID:
+    Description: Choose the ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  PrivateSubnet2ID:
+    Description: Choose the ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnet1ID:
+    Description: ID of the public subnet 1 that you will be used for ALB(for example, subnet-a0246dcd).
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnet2ID:
+    Description: ID of the public subnet 2 that will be used for ALB(for example, subnet-e3246d8e).
+    Type: AWS::EC2::Subnet::Id
+  RADIUSServerInstanceType:
+    AllowedValues:
+      - t2.medium
+      - t3.medium
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: t3.large
+    Description: Amazon EC2 instance type for the RADIUS Server
+    Type: String
+  LinOTPDBName:
+    Type: String
+    Default: LINOTP
+    Description: Specify an RDS Database name.
+  LinOTPAdminPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description: Password for the account used to manage user enrollment, management of LinOTP portal. Must be at least 8 characters containing letters, numbers and symbols
+    MaxLength: '32'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  LinOTPReamlName:
+    Default: QSWSRealm
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Description: Realm Name for LinOTP/LDAP Integration. Min 5 or Max 12 characters
+    MaxLength: '12'
+    MinLength: '5'
+    NoEcho: 'true'
+    Type: String
+  ## SNS Confgs
+  SNSKMSKeyAdmin:
+    Description: 'ARN for Admin Role for SNS Topic KMS Key'
+    Type: String
+    AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
+  QuickStartAdminEmail:
+    Description: 'QuickStart Admin Email for notification to be sent to'
+    Type: String
+    AllowedPattern: '[^@]+@[^@]+\.[^@]+'
+
+Conditions:
+  UsingDefaultBucket: !Equals 
+    - !Ref QSS3BucketName
+    - aws-quickstart
+Resources:
+  Macro:
+    Type: AWS::CloudFormation::Macro
+    Properties:
+      Name: WorkSpaceDefaultRoleMacro
+      FunctionName: !GetAtt WSIAMFunc.Arn
+  WSIAMFunc:
+      Type: AWS::Lambda::Function
+      Properties:
+        FunctionName: !Sub ${AWS::StackName}
+        Handler: index.handler
+        Runtime: python3.8
+        Role: !GetAtt LambdaExecutionRole.Arn
+        Code:
+          ZipFile: |  
+            import boto3
+            import json
+            import logging
+            logger = logging.getLogger()
+            logger.setLevel(logging.INFO)
+            client = boto3.client('iam')
+            def handler(event, context):
+              try:
+                fragment = event['fragment']
+                client.get_role(RoleName='workspaces_DefaultRole')
+                resp = {'requestId': event['requestId'], 'status': 'success','fragment': fragment}
+                return resp      
+              except client.exceptions.NoSuchEntityException:
+                resources_to_be_modified = {}
+                resources_to_be_modified = event['fragment']['Resources']
+                resources_to_be_modified['WorkspaceDefaultRole'] = {'Properties':{'RoleName':'workspaces_DefaultRole','Tags':[{'Key':'Created_By','Value':'WorkSpacesQuickstart_SC3b'}],'ManagedPolicyArns':['arn:aws:iam::aws:policy/AmazonWorkSpacesServiceAccess','arn:aws:iam::aws:policy/AmazonWorkSpacesSelfServiceAccess'],'AssumeRolePolicyDocument':{'Statement':[{'Action':['sts:AssumeRole'],'Effect':'Allow','Principal':{'Service':['workspaces.amazonaws.com']}}],'Version':'2012-10-17'},'Path':'/'}}
+                resources_to_be_modified['WorkspaceDefaultRole']['Type'] = 'AWS::IAM::Role'
+                event['fragment']['Resources'] = resources_to_be_modified
+                resp = {'requestId': event['requestId'], 'status': 'success','fragment': fragment}
+                return resp
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: cloudformation.amazonaws.com
+      FunctionName: !GetAtt WSIAMFunc.Arn
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-lambda-execution-role-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+          - Effect: Allow
+            Action:
+            - iam:GetRole
+            Resource:
+            - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
+  SNSTopicKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS Key for SNS Topic'
+      EnableKeyRotation: true
+      PendingWindowInDays: 20
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: key-default-1
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow administration of the key
+            Effect: Allow
+            Principal:
+              AWS: !Ref SNSKMSKeyAdmin
+            Action:
+              - 'kms:Create*'
+              - 'kms:Describe*'
+              - 'kms:Enable*'
+              - 'kms:List*'
+              - 'kms:Put*'
+              - 'kms:Update*'
+              - 'kms:Revoke*'
+              - 'kms:Disable*'
+              - 'kms:Get*'
+              - 'kms:Delete*'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:CancelKeyDeletion'
+            Resource: '*'
+          - Sid: Allow use of the key
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
+            Action:
+              - 'kms:DescribeKey'
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey'
+              - 'kms:GenerateDataKeyWithoutPlaintext'
+            Resource: '*'
+  SNSStackStatusTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${AWS::StackName}-SNS-Topic'
+      KmsMasterKeyId: !GetAtt SNSTopicKMSKey.KeyId
+      Subscription:
+        - Endpoint: !Ref QuickStartAdminEmail
+          Protocol: email
+  SNSDeliveryLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: sns-delivery-lambda-execution-role-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              Resource:
+              - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+            - Effect: Allow
+              Action:
+               -  'sns:Publish'
+              Resource:
+               -  !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-SNS-Topic'
+  ADAdminSecrets:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ADAdminSecret-${AWS::StackName}
+      Description: Admin User Secrets for Managed AD Quick Start
+      SecretString: !Sub '{"username":${DomainUser},"password":"${DomainAdminPassword}"}'
+  WorkSpacesStack:
+    DependsOn:
+      - Macro
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      ### Temporary Template URL
+      TemplateURL: https://alexa-logs-test.s3.amazonaws.com/workspace-3b.template.yaml
+      Parameters:
+        DirectoryID: !Ref 'DirectoryID'
+        DomainUser: !Ref 'DomainUser'
+        NewUserPassword: !Ref 'NewUserPassword'
+        DomainControllerPrivateIP: !Ref 'DomainControllerPrivateIP'
+        BindDN: !Ref BindDN
+        BaseDN: !Ref BaseDN
+        FirstName: !Ref 'FirstName'
+        LastName: !Ref 'LastName'    
+        BundleId: !Ref 'BundleId'  
+        EnableWorkDocs: !Ref 'EnableWorkDocs'
+        EnableSelfService: !Ref 'EnableSelfService'
+        Tenancy: !Ref 'Tenancy'
+        ComputeTypeName: !Ref 'ComputeTypeName'
+        RunningMode: !Ref 'RunningMode'
+        RootVolumeSizeGib: !Ref 'RootVolumeSizeGib'
+        UserVolumeSizeGib: !Ref 'UserVolumeSizeGib'
+        VolumeEncryptionKey: !Ref 'VolumeEncryptionKey'
+        UserVolumeEncryptionEnabled: !Ref 'UserVolumeEncryptionEnabled'
+        RootVolumeEncryptionEnabled: !Ref 'RootVolumeEncryptionEnabled'
+        SNSDeliveryLambdaExecutionRoleExportName: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
+        SNSStackStatusTopicExportName: !Sub '${AWS::StackName}-SNSStackStatusTopic'
+        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
+        SNSStackStatusTopicExportValue: !Ref SNSStackStatusTopic
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+  RadiusStack:
+    DependsOn:
+      - Macro
+      - WorkSpacesStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://alexa-logs-test.s3.amazonaws.com/radius-3b.template.yaml
+      Parameters:
+        VPCID: !Ref 'VPCID'
+        PrivateSubnet1ID: !Ref 'PrivateSubnet1ID'
+        PrivateSubnet2ID: !Ref 'PrivateSubnet2ID'
+        PublicSubnet1ID: !Ref 'PublicSubnet1ID'
+        PublicSubnet2ID: !Ref 'PublicSubnet2ID'
+        DomainUser: !Ref 'DomainUser'
+        AdminUserSecrets: !Ref 'ADAdminSecrets'
+        VPCCIDR: !Ref 'VPCCIDR'
+        RADIUSServerInstanceType: !Ref 'RADIUSServerInstanceType'
+        LinOTPDBName: !Ref 'LinOTPDBName'
+        LinOTPAdminPassword: !Ref 'LinOTPAdminPassword'
+        LinOTPReamlName: !Ref 'LinOTPReamlName'
+        KeyName: !Ref 'KeyPairName'
+        SNSDeliveryLambdaExecutionRole: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
+        SNSStackStatusTopic: !Sub '${AWS::StackName}-SNSStackStatusTopic'
