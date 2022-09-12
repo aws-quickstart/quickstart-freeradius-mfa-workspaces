@@ -7,6 +7,8 @@ Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'
     Order: '2'
+  QSLint:
+    Exclusions: [ W9002, W9003, W9006, W2511 ]
   cfn-lint:
     config:
       ignore_checks:

@@ -3,6 +3,8 @@ Description: >-
   This templates uses the provided Directory Service ID launch WorkSpace for an existing domain user. It also creates RADIUS solution for the WorkSpaces Directory. **WARNING** This template creates Amazon EC2
   Linux instance, RDS and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1td6osa6h)
 Metadata:
+  QSLint:
+    Exclusions: [ W9002, W9003, W9006, W2511 ]
   cfn-lint:
     config:
       ignore_checks:
