@@ -1096,7 +1096,7 @@ Resources:
             - ds:DescribeCertificate
             - ds:DescribeConditionalForwarders
             - ds:DescribeEventTopics
-            -	ec2:DescribeInstanceAttribute
+            - ec2:DescribeInstanceAttribute
             -	ec2:DescribeSecurityGroups
             -	ec2:DescribeSecurityGroupReferences 
             -	ec2:DescribeVolumeStatus 
