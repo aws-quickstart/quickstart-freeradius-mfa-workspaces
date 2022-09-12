@@ -1,23 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  This template creates a VPC infrastructure for a multi-AZ, multi-tier
-  deployment of a Windows based Application infrastructure. It deploys a managed
-  Microsoft AD Directory Service into private subnets in separate Availability
-  Zones inside a VPC, as well as Remote Desktop Gateway instances and managed
-  NAT gateways into the public subnet for each Availability Zone. The default
-  Domain Administrator user is 'admin'.  For adding members to the domain,
-  ensure that they are launched into the domain member security group created by
-  this template and then configure them to use the AD instances fixed private IP
-  addresses as the DNS server. **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS
-  resources used if you create a stack from this template. (qs-xxxxx)
+  This templates uses the provided Directory Service ID launch WorkSpace for an existing domain user. It also creates RADIUS solution for the WorkSpaces Directory. **WARNING** This template creates Amazon EC2
+  Linux instance, RDS and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1td6osa6h)
 Metadata:
   cfn-lint:
     config:
       ignore_checks:
         - W9006
   QuickStartDocumentation:
-    EntrypointName: Parameters for deploying AWS Managed Microsoft AD into a new VPC
+    EntrypointName: Parameters for deploying MFA enabled Workspaces into existing managed Directory Service.
     Order: '5'
   'AWS::CloudFormation::Interface':
     ParameterGroups:
@@ -25,14 +16,10 @@ Metadata:
           default: WorkSpaces and WorkSpaces Directory Configuration.
         Parameters:
           - DomainUser
-          - FirstName
-          - LastName
-          - NewUserPassword
+          - DomainUserPassword
           - DirectoryID
           - BindDN
           - BaseDN
-          - DomainAdminPassword
-          - MngmntInstancePrivateIP
           - Tenancy
           - EnableSelfService
           - EnableWorkDocs
@@ -75,23 +62,15 @@ Metadata:
       KeyPairName:
         default: Key Pair Name
       DomainUser:
-        default: Domain admin user required launch workspace user
-      FirstName:
-        default: First Name of the user to be created to launch workspace
-      LastName:
-        default: Last Name of the user to be created to launch workspace
-      NewUserPassword:
-        default: Password to be set for user to be created to launch workspace
+        default: An existing Domain username that will be used to create WorkSpace. This user is required to have LDAP bind Permissions.
+      DomainUserPassword:
+        default: Password of the existing Domain user. 
       DirectoryID:
-        default: Directory ID for WorkSpaces
+        default: Directory ID of an existing Directory Service
       BindDN:
-        default: BindDN for AD
+        default: BindDN of the existing Domain user
       BaseDN:
-        default: BaseDN for AD
-      DomainAdminPassword:
-        default: Domain Admin Password
-      MngmntInstancePrivateIP:
-        default: Private IP for management instance
+        default: BaseDN of the existing Domain user
       Tenancy:
         default: WorkSpaces VPC Tenancy
       BundleId:
@@ -116,14 +95,6 @@ Metadata:
         default: Quick Start S3 bucket region
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
-      RDGWCIDR:
-        default: Allowed Remote Desktop Gateway External Access CIDR
-      RDGWInstanceType:
-        default: Remote Desktop Gateway Instance Type
-      S3CRLBucketName:
-        default: CA CRL S3 Bucket Name
-      UseS3ForCRL:
-        default: Use S3 for CA CRL Location
       SNSKMSKeyAdmin:
         default: ARN of Role for SNS Topic KMS Key Administration
       QuickStartAdminEmail:
@@ -143,53 +114,26 @@ Parameters:
     MaxLength: '25'
     MinLength: '5'
     Type: String
-  DomainAdminPassword:
-    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    Description: Password for the Admin user account. Must be at least 8 characters containing letters, numbers and symbols
-    MaxLength: '32'
-    MinLength: '8'
-    NoEcho: 'true'
-    Type: String
-  NewUserPassword:
+  DomainUserPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: Password for the WorkSpace user account. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
     Type: String
-  FirstName:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Jane
-    Description: Firstname of the domain user account that WorkSpace will be launched for.
-    MaxLength: '25'
-    MinLength: '2'
-    Type: String
-  LastName:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Doe
-    Description: Lastname of the Domain User Account that WorkSpace will be launched for.
-    MaxLength: '25'
-    MinLength: '2'
-    Type: String
-  MngmntInstancePrivateIP:
-    Default: '10.0.0.1'
-    Description: Private IP of mangment instance
-    MaxLength: '25'
-    MinLength: '2'
-    Type: String
   DirectoryID:
-    Default: 'd-123abc'
-    Description: Directory ID for WorkSpaces
-    MaxLength: '25'
-    MinLength: '2'
+    Default: 'd-12345abced'
+    Description: Existing Directory Service ID. This will be used to register WorkSpaces
+    MaxLength: '12'
+    MinLength: '12'
     Type: String
   BindDN:
-    Default: 'BindDN'
-    Description: BindDN for AD
+    Default: 'CN=domainuser,CN=Users,DC=example,DC=com'
+    Description: BindDN for the existing domain user in AD. 
     Type: String
   BaseDN:
-    Default: 'BaseDN'
-    Description: BaseDN for AD
+    Default: 'CN=Users,DC=example,DC=com'
+    Description: BaseDN for existing domain user in AD. 
     Type: String
   Tenancy:
     AllowedValues:
@@ -284,7 +228,7 @@ Parameters:
     ConstraintDescription: >-
       Quick Start key prefix can include numbers, lowercase letters, uppercase
       letters, hyphens (-), and forward slash (/)
-    Default: quickstart-microsoft-activedirectory/
+    Default: quickstart-freeradius-mfa-workspaces/
     Description: >-
       S3 key prefix for the Quick Start assets. Quick Start key prefix can
       include numbers, lowercase letters, uppercase letters, hyphens (-), and
@@ -293,9 +237,8 @@ Parameters:
 
    ##### RADIUS Server Configuration
   VPCID:
-    Default: 'vpc-xxxxx'
     Description: VPC ID for Workspaces
-    Type: String
+    Type: List<AWS::EC2::VPC::Id>
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -303,10 +246,10 @@ Parameters:
     Description: CIDR Block for the VPC
     Type: String
   PrivateSubnet1ID:
-    Description: Choose the ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: Choose the WorkSpaces private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: Choose the ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: Choose the WorkSpaces private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PublicSubnet1ID:
     Description: ID of the public subnet 1 that you will be used for ALB(for example, subnet-a0246dcd).
@@ -329,7 +272,7 @@ Parameters:
       - m5.2xlarge
       - m5.4xlarge
     Default: t3.large
-    Description: Amazon EC2 instance type for the RADIUS Server
+    Description: Amazon EC2 instance type for the RADIUS Server.
     Type: String
   LinOTPDBName:
     Type: String
@@ -337,7 +280,7 @@ Parameters:
     Description: Specify an RDS Database name.
   LinOTPAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
-    Description: Password for the account used to manage user enrollment, management of LinOTP portal. Must be at least 8 characters containing letters, numbers and symbols
+    Description: Password of the user account used to manage user enrollment and management of the LinOTP portal. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
@@ -345,18 +288,18 @@ Parameters:
   LinOTPReamlName:
     Default: QSWSRealm
     AllowedPattern: '[a-zA-Z0-9]*'
-    Description: Realm Name for LinOTP/LDAP Integration. Min 5 or Max 12 characters
+    Description: Realm Name for LinOTP/LDAP Integration. Min 5 or Max 12 characters. Default value is QSWSRealm. 
     MaxLength: '12'
     MinLength: '5'
     NoEcho: 'true'
     Type: String
   ## SNS Confgs
   SNSKMSKeyAdmin:
-    Description: 'ARN for Admin Role for SNS Topic KMS Key'
+    Description: 'ARN of an IAM Role for SNS Topic KMS Key Administration'
     Type: String
     AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
   QuickStartAdminEmail:
-    Description: 'QuickStart Admin Email for notification to be sent to'
+    Description: 'QuickStart user email that notification will be sent to after successful creation the stack'
     Type: String
     AllowedPattern: '[^@]+@[^@]+\.[^@]+'
 
@@ -520,28 +463,45 @@ Resources:
                -  'sns:Publish'
               Resource:
                -  !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-SNS-Topic'
-  ADAdminSecrets:
+  DomainUserSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub ADAdminSecret-${AWS::StackName}
-      Description: Admin User Secrets for Managed AD Quick Start
-      SecretString: !Sub '{"username":${DomainUser},"password":"${DomainAdminPassword}"}'
+      Name: !Sub DomainUserSecrets-${AWS::StackName}
+      Description: Domain user secrets in existing Directory Service
+      SecretString: !Sub '{"username":${DomainUser},"password":"${DomainUserPassword}"}'
+  DomainUserBindDN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: BindDN of existing Domain User. Used for LinOTP LDAP Connection. 
+      Name: /LinOTP/Config/extAD/BindDN
+      Type: String
+      Value: !Ref BindDN
+  DomainUserBaseDN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: BaseDN of existing Domain User. Used for LinOTP LDAP Connection. 
+      Name: /LinOTP/Config/extAD/BaseDN
+      Type: String
+      Value: !Ref BaseDN
+  DirectoryIDinSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: BaseDN of existing Domain User. Used for LinOTP LDAP Connection. 
+      Name: /LinOTP/Config/extAD/DirectoryID
+      Type: String
+      Value: !Ref DirectoryID
   WorkSpacesStack:
     DependsOn:
       - Macro
     Type: AWS::CloudFormation::Stack
     Properties:
-      ### Temporary Template URL
-      TemplateURL: https://alexa-logs-test.s3.amazonaws.com/workspace-3a.template.yaml
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/workspace-3.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         DirectoryID: !Ref 'DirectoryID'
-        BindDN: !Ref BindDN
-        BaseDN: !Ref BaseDN
         DomainUser: !Ref 'DomainUser'
-        NewUserPassword: !Ref 'NewUserPassword'
-        MngmntInstancePrivateIP: !Ref 'MngmntInstancePrivateIP'
-        FirstName: !Ref 'FirstName'
-        LastName: !Ref 'LastName'    
+        DomainUserPassword: !Ref 'DomainUserPassword'
         BundleId: !Ref 'BundleId'  
         EnableWorkDocs: !Ref 'EnableWorkDocs'
         EnableSelfService: !Ref 'EnableSelfService'
@@ -565,15 +525,17 @@ Resources:
       - WorkSpacesStack
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://alexa-logs-test.s3.amazonaws.com/radius-3a.template.yaml
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/radius-3.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        VPCID: !Ref 'VPCID'
+        VPCID: !Join [",", !Ref VPCID]
         PrivateSubnet1ID: !Ref 'PrivateSubnet1ID'
         PrivateSubnet2ID: !Ref 'PrivateSubnet2ID'
         PublicSubnet1ID: !Ref 'PublicSubnet1ID'
         PublicSubnet2ID: !Ref 'PublicSubnet2ID'
         DomainUser: !Ref 'DomainUser'
-        AdminUserSecrets: !Ref 'ADAdminSecrets'
+        AdminUserSecrets: !Ref 'DomainUserSecrets'
         VPCCIDR: !Ref 'VPCCIDR'
         RADIUSServerInstanceType: !Ref 'RADIUSServerInstanceType'
         LinOTPDBName: !Ref 'LinOTPDBName'

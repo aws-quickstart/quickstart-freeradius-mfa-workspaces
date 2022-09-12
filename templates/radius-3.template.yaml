@@ -103,10 +103,10 @@ Parameters:
     Description: CIDR Block for the VPC
     Type: String
   PrivateSubnet1ID:
-    Description: Choose the ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: Choose the WorkSpaces private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: Choose the ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: CChoose the WorkSpaces private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PublicSubnet1ID:
     Description: ID of the public subnet 1 that you will be used for ALB(for example, subnet-a0246dcd).
@@ -127,7 +127,7 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   SNSDeliveryLambdaExecutionRole:
-    Description: Execution role for SNS publisher Lambda 
+    Description: Execution role for SNS publisher in Lambda 
     Type: String
     Default: ''
   SNSStackStatusTopic:
@@ -145,12 +145,12 @@ Resources:
         - Key: StackName
           Value: !Ref AWS::StackName
       Content:
-        description: Configures LinOTP DB and installs FreeRADIUS
+        description: Configures LinOTP Database, installs FreeRADIUS and enables MFA on the Directory Service
         schemaVersion: '0.3'
         assumeRole: '{{AutomationAssumeRole}}'
         parameters:
           InstanceId:
-            description: "ID of the instance."
+            description: "ID of the RADIUS EC2 instance."
             type: "String" 
           ASGName:
             description: "Auto Scaling group name."
@@ -213,7 +213,9 @@ Resources:
               Parameters:
                 commands:
                   - sudo amazon-linux-extras install epel -y
-                  - sudo yum localinstall http://linotp.org/rpm/el7/linotp/x86_64/Packages/LinOTP_repos-1.1-1.el7.x86_64.rpm -y
+                  - sudo yum localinstall http://dist.linotp.org/rpm/el7/linotp/x86_64/Packages/LinOTP_repos-1.1-1.el7.x86_64.rpm -y
+                  - sudo sed -i 's,http://linotp.org/rpm/el7/dependencies/x86_64, http://dist.linotp.org/rpm/el7/dependencies/x86_64,g' /etc/yum.repos.d/linotp.repo
+                  - sudo sed -i 's,http://linotp.org/rpm/el7/linotp/x86_64, http://dist.linotp.org/rpm/el7/linotp/x86_64,g' /etc/yum.repos.d/linotp.repo
               DocumentName: AWS-RunShellScript
               InstanceIds:
                 - '{{InstanceId}}'
@@ -400,12 +402,12 @@ Resources:
                     LinOTPADMINPASSWORD=$(aws secretsmanager get-secret-value --region $REGION --secret-id $AdminPassword | jq -r .SecretString | jq -r .password)
 
                     ADUSER=$(curl http://169.254.169.254/latest/user-data | grep -Po 'AdminUserSecrets=\K[^ ]+')
-                    ADUSERPASS=$(aws secretsmanager get-secret-value --region $REGION --secret-id $ADUSER | jq -r .SecretString | jq -r .password)
+                    ADUSERPASS=$(aws secretsmanager get-secret-value --region $REGION --secret-id $ADUSER --query SecretString --output text | grep -o '"password":"[^"]*' |  grep -o '[^"]*$')
 
-                    BINDDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/BindDN" | jq -r '.Parameter.Value')
-                    BASEDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/BaseDN" | jq -r '.Parameter.Value')
+                    BINDDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/BindDN" | jq -r '.Parameter.Value')
+                    BASEDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/BaseDN" | jq -r '.Parameter.Value')
                     
-                    DNSSERVERS=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/DNSServers" | jq -r '.Parameter.Value')
+                    DNSSERVERS=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DNSServers" | jq -r '.Parameter.Value')
                     DNS1=$(echo $DNSSERVERS | grep -E -o "^([0-9]{1,3}[\.]){3}[0-9]{1,3}")
                     DNS2=$(echo $DNSSERVERS | grep -E -o "(([0-9]{1,3}[\.]){3}[0-9]{1,3})$")
 
@@ -693,7 +695,7 @@ Resources:
                     VPCIP="$(cut -d'/' -f1 <<<"$CIDR")"
                     HOSTIP=$(hostname -I | awk '{print $1}')
                     RADSECRET=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RADSECRET_ID | jq -r .SecretString | jq -r .password)
-                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/AWSManagedAD/DirectoryID" | jq -r '.Parameter.Value')
+                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DirectoryID" | jq -r '.Parameter.Value')
                     
                     aws ds enable-radius --directory-id=$DIRECTORYID --radius-settings RadiusServers=$HOSTIP,RadiusPort=1812,RadiusTimeout=50,RadiusRetries=4,SharedSecret=$RADSECRET,AuthenticationProtocol=PAP,DisplayLabel=FreeRADIUS --region=$REGION
 
@@ -716,7 +718,7 @@ Resources:
                     VPCIP="$(cut -d'/' -f1 <<<"$CIDR")"
                     HOSTIP=$(hostname -I | awk '{print $1}')
                     RADSECRET=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RADSECRET_ID | jq -r .SecretString | jq -r .password)
-                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/AWSManagedAD/DirectoryID" | jq -r '.Parameter.Value')
+                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DirectoryID" | jq -r '.Parameter.Value')
                     
                     aws ds update-radius --directory-id=$DIRECTORYID --radius-settings RadiusServers=$HOSTIP,RadiusPort=1812,RadiusTimeout=50,RadiusRetries=4,SharedSecret=$RADSECRET,AuthenticationProtocol=PAP,DisplayLabel=FreeRADIUS --region=$REGION
 
@@ -905,8 +907,7 @@ Resources:
                   - ssm:GetParameter
                 Resource:
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/LinOTP/Config/AD/*
-                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/WSDirectoryId
-                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AWSManagedAD/DirectoryID/*
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/LinOTP/Config/extAD/DirectoryID/*
           PolicyName: AWS-SSM-Automation-Policy
         - PolicyDocument:
             Version: '2012-10-17'
@@ -1203,7 +1204,7 @@ Resources:
                       
                   Thank you for deploying {solution_name}.
                     
-                  This is to confirm that MFA-enabled WorkSpace has been successfully provisioned for you and is ready to use.
+                  This messages confirms MFA-enabled WorkSpace has been successfully provisioned for your use.
 
                   Your WorkSpace Registration Code is: {reg_code}
 
@@ -1211,12 +1212,12 @@ Resources:
 
                   Your Username is: {wsusername} 
                   
-                  Your Password can be accessed in AWS Secrets Manager.
+                  Your Password can be accessed in AWS Secrets Manager. If you do not have access, please contact your admin. 
 
                   The Portal where you need to perform MFA token registration can be accessed via: {linotpportal}.  
-                  You will be required to login with your username and password. 
+                  You will be required to login with your domain username and password. 
 
-                  You can download Amazon WorkSpaces client from: https://clients.amazonworkspaces.com/.
+                  You can download the latest Amazon WorkSpaces client from: https://clients.amazonworkspaces.com/.
 
                   Should face any issue or require further assistance, please to reach out to your IT Admin.
 

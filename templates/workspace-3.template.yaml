@@ -7,7 +7,7 @@ Description: >-
   create a stack from this template. (qs-xxxx)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: 'Parameters for deploying self-managed AD into an existing VPC'
+    EntrypointName: 'Parameters for Workspace into existing Directory Service.'
     Order: '2'
   cfn-lint:
     config:
@@ -25,12 +25,7 @@ Metadata:
         Parameters:
           - DirectoryID
           - DomainUser
-          - NewUserPassword
-          - FirstName
-          - LastName
-          - BindDN
-          - BaseDN
-          - DomainControllerPrivateIP
+          - DomainUserPassword
       - Label:
           default: WorkSpaces and WorkSpaces Directory Configuration.
         Parameters:
@@ -50,18 +45,8 @@ Metadata:
         default: Directory ID for WorkSpaces
       DomainUser:
         default: Normal Domain user that will be used to launch WorkSpace
-      BindDN:
-        default: BindDN for AD
-      BaseDN:
-        default: BaseDN for AD
-      DomainControllerPrivateIP:
-        default: Domain Controller's Private IP
-      NewUserPassword:
+      DomainUserPassword:
         default: New Password for WorkSpace User 
-      FirstName:
-        default: WorkSpace user's First Name
-      LastName:
-        default: WorkSpace user's Last Name
       EnableSelfService:
         default: Enable Self Service on the WorkSpace Directory
       EnableWorkDocs:
@@ -98,40 +83,12 @@ Parameters:
     MaxLength: '25'
     MinLength: '5'
     Type: String
-  BindDN:
-    Default: 'BindDN'
-    Description: BindDN for AD
-    Type: String
-  BaseDN:
-    Default: 'BaseDN'
-    Description: BaseDN for AD
-    Type: String
-  NewUserPassword:
+  DomainUserPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: Password for the WorkSpace user account. Must be at least 8 characters containing letters, numbers and symbols
     MaxLength: '32'
     MinLength: '8'
     NoEcho: 'true'
-    Type: String
-  FirstName:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Jane
-    Description: Firstname of the domain user account that WorkSpace will be launched for.
-    MaxLength: '25'
-    MinLength: '2'
-    Type: String
-  LastName:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: Doe
-    Description: Lastname of the Domain User Account that WorkSpace will be launched for.
-    MaxLength: '25'
-    MinLength: '2'
-    Type: String
-  DomainControllerPrivateIP:
-    Default: '10.0.0.1'
-    Description: Private IP of mangment instance
-    MaxLength: '25'
-    MinLength: '2'
     Type: String
   EnableWorkDocs:
     AllowedValues:
@@ -226,7 +183,7 @@ Parameters:
     Description: '3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)'
     Type: 'String'
   QSS3KeyPrefix:
-    Default: 'quickstart-microsoft-activedirectory/'
+    Default: 'quickstart-freeradius-mfa-workspaces/'
     Description: 'S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)'
     Type: 'String'
   
@@ -235,43 +192,18 @@ Conditions:
   WorkspaceVolumeEncryptionCheck: !Or [!Equals [!Ref UserVolumeEncryptionEnabled, "true"], !Equals [!Ref RootVolumeEncryptionEnabled, "true"]]
   
 Resources:
-  StoreDirectoryID:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /ManagedAD/DirectoryID
-      Type: String
-      Value: !Ref 'DirectoryID'
-      Description: AWS Microsoft AD ID
-
-  DomainUserBindDN:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Description: BindDN of Domain User. Used for LinOTP LDAP Connection. 
-      Name: /LinOTP/Config/AD/BindDN
-      Type: String
-      Value: 'CN=xxx,OU=xxxx,DC=xxx,DC=xxx'
-
-  DomainUserBaseDN:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Description: BaseDN of Domain User. Used for LinOTP LDAP Connection. 
-      Name: /LinOTP/Config/AD/BaseDN
-      Type: String
-      Value: 'OU=xxxx,DC=xxx,DC=xxx'
 
   DNSServers:
     Type: AWS::SSM::Parameter
     Properties:
       Description: AD DNS Servers used for LinOTP LDAP Connection. 
-      Name: /LinOTP/Config/AD/DNSServers
-      Type: String
+      Name: /LinOTP/Config/extAD/DNSServers
+      Type: StringList
       Value: '1.1.1.1'
   
   
-  AWSQuickStartADConnector:
+  RegisterDSforWorkSpacesDoc:
     DependsOn:
-      - DomainUserBindDN
-      - DomainUserBaseDN
       - DNSServers
     Type: AWS::SSM::Document
     Properties:
@@ -281,12 +213,12 @@ Resources:
           Value: !Ref AWS::StackName
       Content:
         schemaVersion: '0.3'
-        description: 'Create a WorkSpace User in AD, Launch AD Connector and register it for WorkSpaces'
+        description: 'Checks if provided Directory ID is registered for WorkSpaces, registers it if not.'
         assumeRole: '{{AutomationAssumeRole}}'
         parameters:
           AutomationAssumeRole:
             type: String
-            description: "The ARN of the role for Automation to perform actions such as create AD Connector DS."
+            description: "The ARN of the IAM role used for SSM Automation."
           DirectoryID:
             type: String
             description: " Directory ID for WorkSpaces"
@@ -294,30 +226,10 @@ Resources:
             description: 'Domain User'
             type: 'String'
             default: 'TestUser'
-          BaseDN:
-            description: 'Base DN'
-            type: 'String'
-            default: 'BaseDN'
-          BindDN:
-            description: 'Bind DN'
-            type: 'String'
-            default: 'BindDN'
-          NewUserPassword:
-            description: "password for WorkSpaces user"
+          DomainUserPassword:
+            description: "password of the WorkSpace user"
             type: 'String'
             default: 'xxxxxxx'
-          FirstName:
-            description: 'First Name'
-            type: 'String'
-            default: 'XYZ'
-          LastName:
-            description: 'Last Name'
-            type: 'String'
-            default: 'ABC'
-          DomainControllerPrivateIP:
-            description: 'Private IP of Mngmnt Instance'
-            type: 'String'
-            default: '10.x.x.x'
           EnableWorkDocs:
             default: true
             description: 
@@ -339,189 +251,168 @@ Resources:
             type: 'String'
             
         mainSteps:
-        - name: 'describeDirectory'
-          action: aws:executeAwsApi
-          onFailure: 'step:signalfailure'
-          nextStep: 'dcInstanceId'
-          inputs:
-            Service: ds
-            Api: DescribeDirectories
-            DirectoryIds: 
-             - '{{DirectoryID}}'
-          outputs:
-            - Name: DirectoryId
-              Selector: '$.DirectoryDescriptions[0].DirectoryId'
-              Type: 'String'
-            - Name: DNSName
-              Selector: '$.DirectoryDescriptions[0].Name'
-              Type: 'String'
-            - Name: DCInstance1IP
-              Selector: '$.DirectoryDescriptions[0].DnsIpAddrs[0]'
-              Type: 'String'
-            - Name: DCInstance2IP
-              Selector: '$.DirectoryDescriptions[0].DnsIpAddrs[1]'
-              Type: 'String'
-            - Name: VPCId
-              Selector: '$.DirectoryDescriptions[0].VpcSettings.VpcId'
-              Type: 'String'
-            - Name: Subnet1Id
-              Selector: '$.DirectoryDescriptions[0].VpcSettings.SubnetIds[0]'
-              Type: 'String'
-            - Name: Subnet2Id
-              Selector: '$.DirectoryDescriptions[0].VpcSettings.SubnetIds[1]'
-              Type: 'String'
-            - Name: DirectorySGId
-              Selector: '$.DirectoryDescriptions[0].VpcSettings.SecurityGroupId'
-        - name: 'dcInstanceId'
-          action: aws:executeAwsApi
-          onFailure: 'step:signalfailure'
-          nextStep: 'LambdaUpdateADRole'
-          inputs:
-            Service: ec2
-            Api: DescribeInstances
-            Filters:
-              - Name: 'private-ip-address'
-                Values: ['{{DomainControllerPrivateIP}}']
-          outputs:
-            - Name: DCInstanceId
-              Selector: '$.Reservations[0].Instances[0].InstanceId'
-              Type: 'String'
-            - Name: DCInstanceProfile
-              Selector: '$.Reservations[0].Instances[0].IamInstanceProfile.Arn'
-              Type: 'String'
-        
-        - name: 'LambdaUpdateADRole'
-          action: 'aws:executeScript'
-          onFailure: 'step:signalfailure'
-          nextStep: 'CreateWorkSpaceUser'
-          inputs:
-            Runtime: python3.8
-            InputPayload:
-              InstanceProfile: '{{dcInstanceId.DCInstanceProfile}}'
-            Handler: script_handler
-            Script: |-
+          - name: 'describeDirectory'
+            action: aws:executeAwsApi
+            onFailure: 'step:signalfailure'
+            nextStep: 'writeDnsServerIpsToParameterStore'
+            inputs:
+              Service: ds
+              Api: DescribeDirectories
+              DirectoryIds: 
+              - '{{DirectoryID}}'
+            outputs:
+              - Name: DirectoryId
+                Selector: '$.DirectoryDescriptions[0].DirectoryId'
+                Type: 'String'
+              - Name: DNSName
+                Selector: '$.DirectoryDescriptions[0].Name'
+                Type: 'String'
+              - Name: DCInstance1IP
+                Selector: '$.DirectoryDescriptions[0].DnsIpAddrs[0]'
+                Type: 'String'
+              - Name: DCInstance2IP
+                Selector: '$.DirectoryDescriptions[0].DnsIpAddrs[1]'
+                Type: 'String'
+              - Name: VPCId
+                Selector: '$.DirectoryDescriptions[0].VpcSettings.VpcId'
+                Type: 'String'
+              - Name: Subnet1Id
+                Selector: '$.DirectoryDescriptions[0].VpcSettings.SubnetIds[0]'
+                Type: 'String'
+              - Name: Subnet2Id
+                Selector: '$.DirectoryDescriptions[0].VpcSettings.SubnetIds[1]'
+                Type: 'String'
+              - Name: DirectorySGId
+                Selector: '$.DirectoryDescriptions[0].VpcSettings.SecurityGroupId'
+            
+          - name: writeDnsServerIpsToParameterStore
+            action: 'aws:executeScript'
+            inputs:
+              Runtime: python3.8
+              Handler: script_handler
+              Script: |-
                 import boto3
-                import json
-                import base64
-                from botocore.exceptions import ClientError
-                iam_client = boto3.client(service_name="iam")
+                ssm_client = boto3.client('ssm')
+                def combine_dnsserver_ips(*items):
+                  final_list = []
+                  if len(items) == 0:
+                    return final_list
+                  else:
+                    for x in items:
+                      final_list.append(str(x))
+                  return (",".join(final_list))
                 def script_handler(events, context):
-                  instance_profile_arn = events['InstanceProfile']
-                  instance_profile_split_array = instance_profile_arn.split('/')
-                  instance_profile_name = instance_profile_split_array[1]
-                  Instance_profile_object = iam_client.get_instance_profile(InstanceProfileName=instance_profile_name)
-                  roles_list = Instance_profile_object['InstanceProfile']['Roles']
-                  role_name = ""
-                  for role in roles_list:
-                    role_name = role['RoleName']
-                  print(role_name)
-                  response = iam_client.put_role_policy(RoleName=role_name,PolicyName='Domain-User-Secret-Policy',PolicyDocument='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["secretsmanager:GetSecretValue","secretsmanager:DescribeSecret"],"Resource":"*"},{"Effect":"Allow","Action":"ssm:PutParameter","Resource":["arn:aws:ssm:*:*:parameter/LinOTP/Config/AD/BaseDN","arn:aws:ssm:*:*:parameter/LinOTP/Config/AD/BindDN","arn:aws:ssm:*:*:parameter/LinOTP/Config/AD/DNSServers"]}]}')
+                  dns_ip_1 = events['dns_ip_1']
+                  dns_ip_2 = events['dns_ip_2']
+                  ssm_param_name = events['ssm_param']
+                  dns_ips = combine_dnsserver_ips(dns_ip_1, dns_ip_2)
+                  response = ssm_client.put_parameter(
+                    Name=ssm_param_name,
+                    Type='StringList',
+                    Overwrite=True,
+                    Value= dns_ips
+                  )
                   return response
+              InputPayload:
+                dns_ip_1: '{{describeDirectory.DCInstance1IP}}'
+                dns_ip_2: '{{describeDirectory.DCInstance2IP}}'
+                ssm_param: !Ref DNSServers
+            description: Write DNS Server IP addresses to SSM Parameter Store
+            nextStep: isDirectoryRegistered
 
-        - name: 'CreateWorkSpaceUser'
-          action: 'aws:runCommand'
-          onFailure: 'step:signalfailure'
-          nextStep: 'RegisterADCforWorkSpaces'
-          inputs:
-            DocumentName: 'AWS-RunPowerShellScript'
-            InstanceIds:
-              - '{{dcInstanceId.DCInstanceId}}'
-            CloudWatchOutputConfig:
-              CloudWatchOutputEnabled: 'true'
-              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-            Parameters:
-              commands:
-                - |
-                  $username = '{{DomainUser}}'
-                    $firstname = '{{FirstName}}'
-                    $lastname = '{{LastName}}'
-                    $password = ConvertTo-SecureString '{{NewUserPassword}}' -AsPlainText -Force
-                    $adname = $firstname + " " + $lastname                   
-                    $domainname = "@"+ (Get-ADDomain).Dnsroot
-                    $upn = $username + $domainname
-                    $path =  (get-ADDomain).UsersContainer
-                    New-ADUser -Name $adname -GivenName $firstname -Surname $lastname -SamAccountName $username -DisplayName $adname -Path $path -UserPrincipalName $upn -AccountPassword $password -Enabled $true
-        
-        - name: RegisterADCforWorkSpaces
-          action: 'aws:executeAwsApi'
-          onFailure: 'step:signalfailure'
-          nextStep: 'SaveADConfig'
-          inputs:
-            Service: workspaces
-            Api: RegisterWorkspaceDirectory
-            DirectoryId: '{{describeDirectory.DirectoryId}}'
-            EnableWorkDocs: '{{EnableWorkDocs}}'
-            EnableSelfService: '{{EnableSelfService}}'
-            Tenancy: '{{Tenancy}}'
-        
-        # Save AD parameters in SSM Parameter Store
-        - name: 'SaveADConfig'
-          action: 'aws:runCommand'
-          onFailure: 'step:signalfailure'
-          nextStep: 'signalsuccess'
-          inputs:
-              DocumentName: 'AWS-RunPowerShellScript'
-              InstanceIds:
-                - '{{dcInstanceId.DCInstanceId}}'
-              CloudWatchOutputConfig:
-                CloudWatchOutputEnabled: 'true'
-                CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
-              Parameters:
-                commands:
-                  - |
-                    $username = '{{DomainUser}}'
-                      $ADServer1PrivateIP = '{{describeDirectory.DCInstance1IP}}'
-                      $ADServer2PrivateIP = '{{describeDirectory.DCInstance2IP}}'
-                      $binddn = '{{BindDN}}'
-                      $basedn = '{{BaseDN}}'
-                      Write-SSMParameter -Name "/LinOTP/Config/AD/BaseDN" -Type "String" -Value $basedn -Overwrite $true
-                      Write-SSMParameter -Name "/LinOTP/Config/AD/BindDN" -Type "String" -Value $binddn -Overwrite $true
-                      Write-SSMParameter -Name "/LinOTP/Config/AD/DNSServers" -Type "StringList" -Value "$ADServer1PrivateIP $ADServer2PrivateIP" -Overwrite $true
-                        
-        # If all steps complete successfully signals CFN of Success
-        - name: 'signalsuccess'
-          action: 'aws:executeAwsApi'
-          isEnd: True
-          inputs:
-            Service: cloudformation
-            Api: SignalResource
-            LogicalResourceId: 'WaitCondition'
-            StackName: !Sub '${AWS::StackName}'
-            Status: SUCCESS
-            UniqueId: AUTOMATION-SUCCEEDED
-        
-        # If any steps fails signals CFN of Failure
-        - name: 'signalfailure'
-          action: 'aws:executeAwsApi'
-          inputs:
-            Service: cloudformation
-            Api: SignalResource
-            LogicalResourceId: 'WaitCondition'
-            StackName: !Sub '${AWS::StackName}'
-            Status: FAILURE
-            UniqueId: '{{dcInstanceId.DCInstanceId}}'
+          - name: isDirectoryRegistered
+            action: 'aws:executeScript'
+            outputs:
+              - Name: registration_status
+                Type: Boolean
+                Selector: $.Payload.status
+            inputs:
+              Runtime: python3.8
+              Handler: script_handler
+              Script: |-
+                import boto3
+                wks_client = boto3.client("workspaces")
+                def script_handler(events, context):
+                    directory_id = events['directoryId']
+                    try:
+                        response = wks_client.describe_workspace_directories(DirectoryIds=[directory_id])
+                        if len(response["Directories"]) == 0:
+                            return {"status": False}
+                        else:
+                            return {"status": True}
+                    except:
+                        return {"status": False}
+              InputPayload:
+                directoryId: '{{DirectoryID}}'
+            description: Check if provided Directory ID is Registered.
+            nextStep: branch
+          - name: branch
+            action: 'aws:branch'
+            inputs:
+              Choices:
+                - NextStep: signalsuccess
+                  Variable: '{{isDirectoryRegistered.registration_status}}'
+                  BooleanEquals: true
+                - NextStep: RegisterDSforWorkSpaces
+                  Variable: '{{isDirectoryRegistered.registration_status}}'
+                  BooleanEquals: false
+
+          - name: RegisterDSforWorkSpaces
+            action: 'aws:executeAwsApi'
+            onFailure: 'step:signalfailure'
+            inputs:
+              Service: workspaces
+              Api: RegisterWorkspaceDirectory
+              DirectoryId: '{{describeDirectory.DirectoryId}}'
+              EnableWorkDocs: '{{EnableWorkDocs}}'
+              EnableSelfService: '{{EnableSelfService}}'
+              Tenancy: '{{Tenancy}}'             
+
+          # If all steps complete successfully signals CFN of Success
+          - name: 'signalsuccess'
+            action: 'aws:executeAwsApi'
+            isEnd: True
+            inputs:
+              Service: cloudformation
+              Api: SignalResource
+              LogicalResourceId: 'WaitCondition'
+              StackName: !Sub '${AWS::StackName}'
+              Status: SUCCESS
+              UniqueId: AUTOMATION-SUCCEEDED
+          - name: sleepend
+            action: aws:sleep
+            isEnd: True
+            inputs:
+              Duration: PT1S
+          
+          # If any steps fails signals CFN of Failure
+          - name: 'signalfailure'
+            action: 'aws:executeAwsApi'
+            inputs:
+              Service: cloudformation
+              Api: SignalResource
+              LogicalResourceId: 'SSMAutomationInvoker'
+              StackName: !Sub '${AWS::StackName}'
+              Status: FAILURE
+              UniqueId: AUTOMATION-FAILED
+
   WaitCondition:
     DependsOn: SSMAutomationInvoker
     Type: AWS::CloudFormation::WaitCondition
     CreationPolicy:
       ResourceSignal:
         Count: 1
-        Timeout: PT15M
+        Timeout: PT5M
   
   SSMAutomationInvoker:
     Type: AWS::CloudFormation::CustomResource
     Properties:
       ServiceToken: !GetAtt SSMAutomationLambdaFunc.Arn
-      DocumentName: !Ref AWSQuickStartADConnector
+      DocumentName: !Ref RegisterDSforWorkSpacesDoc
       AutomationAssumeRole: !GetAtt WSDSRole.Arn
       DirectoryID: !Ref DirectoryID
       DomainUser: !Ref DomainUser
-      BaseDN: !Ref BaseDN
-      BindDN: !Ref BindDN
-      NewUserPassword: !Ref NewUserPassword
-      FirstName: !Ref FirstName
-      LastName: !Ref LastName
-      DomainControllerPrivateIP: !Ref DomainControllerPrivateIP
+      DomainUserPassword: !Ref DomainUserPassword
       EnableWorkDocs: !Ref EnableWorkDocs
       EnableSelfService: !Ref EnableSelfService
       Tenancy: !Ref Tenancy
@@ -555,17 +446,14 @@ Resources:
                 document_name = event['ResourceProperties']['DocumentName']
                 automation_assume_role = event['ResourceProperties']['AutomationAssumeRole']
                 domain_user = event['ResourceProperties']['DomainUser']
-                user_password = event['ResourceProperties']['NewUserPassword']
-                base_dn = event['ResourceProperties']['BaseDN']
-                bind_dn = event['ResourceProperties']['BindDN']
-                first_name = event['ResourceProperties']['FirstName']
-                last_name = event['ResourceProperties']['LastName']
-                dc_private_ip = event['ResourceProperties']['DomainControllerPrivateIP']
+                user_password = event['ResourceProperties']['DomainUserPassword']
                 directory_id = event['ResourceProperties']['DirectoryID']
                 enable_workdocs = event['ResourceProperties']['EnableWorkDocs']
                 enable_self_service = event['ResourceProperties']['EnableSelfService']
                 tenancy = event['ResourceProperties']['Tenancy']
-                response = client.start_automation_execution(DocumentName=document_name,Parameters={'AutomationAssumeRole':[automation_assume_role],'BaseDN':[base_dn],'BindDN':[bind_dn],'DomainControllerPrivateIP':[dc_private_ip],'Tenancy':[tenancy],'DirectoryID':[directory_id],'EnableSelfService':[enable_self_service],'EnableWorkDocs':[enable_workdocs],'DomainUser':[domain_user],'NewUserPassword':[user_password],'FirstName':[first_name],'LastName':[last_name]})
+                
+                print(automation_assume_role)
+                response = client.start_automation_execution(DocumentName=document_name,Parameters={'AutomationAssumeRole':[automation_assume_role],'Tenancy':[tenancy],'DirectoryID':[directory_id],'EnableSelfService':[enable_self_service],'EnableWorkDocs':[enable_workdocs],'DomainUser':[domain_user],'DomainUserPassword':[user_password]})
                 if response['AutomationExecutionId']!= None:                  
                   #response_data['Data']['executionID'] = response['AutomationExecutionId']
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
@@ -621,7 +509,7 @@ Resources:
              -  ssm:GetAutomationExecution
              -  ssm:StartAutomationExecution
             Resource:
-             -  !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${AWSQuickStartADConnector}:$DEFAULT
+             -  !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RegisterDSforWorkSpacesDoc}:$DEFAULT
           
           - Effect: Allow
             Action: iam:PassRole
@@ -661,7 +549,7 @@ Resources:
                   - S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
               - Effect: Allow
                 Action: ssm:StartAutomationExecution
-                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${AWSQuickStartADConnector}:$DEFAULT
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/${RegisterDSforWorkSpacesDoc}:$DEFAULT
               - Effect: Allow
                 Action: ssm:SendCommand
                 Resource:
@@ -767,8 +655,6 @@ Resources:
                 - ssm:PutParameter
                 - ssm:GetParameter
                 Resource:
-                - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DomainUserBindDN}
-                - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DomainUserBaseDN}
                 - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${DNSServers}
               - Effect: Allow
                 Action:
@@ -799,6 +685,12 @@ Resources:
                 Resource:
                  - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/WSDSRole
+              - Effect: Allow
+                Action:
+                - ssm:PutParameter
+                - ssm:GetParameter
+                Resource:
+                - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${DNSServers}
           PolicyName: AWS-SSM-PassRole
       Path: /
       ManagedPolicyArns:
@@ -926,7 +818,6 @@ Resources:
   CleanUpCustomResource:
     Type: AWS::CloudFormation::CustomResource
     Properties:
-      DomainControllerPrivateIP: !Ref DomainControllerPrivateIP
       ServiceToken: !GetAtt CleanUpLambdaFunction.Arn
       WSDirectoryId: !Ref DirectoryID
   CleanUpLambdaFunction:
@@ -942,8 +833,8 @@ Resources:
             import boto3
             import json
             import logging
-            import botocore
             import cfnresponse
+            import botocore
             import time
             logger = logging.getLogger()
             logger.setLevel(logging.INFO)
@@ -962,7 +853,6 @@ Resources:
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Response': 'Success'})
                 elif event['RequestType'] == 'Delete':
                   logger.info("Processing Delete event - " + json.dumps(event))
-                  dc_private_ip = event['ResourceProperties']['DomainControllerPrivateIP']
                   directory_id = event['ResourceProperties']['WSDirectoryId']
                   
                   ## De-Register WorkSpace Directory
@@ -977,7 +867,7 @@ Resources:
                   
                   ## Removing Inline Policy from main AD Role
                   logger.info("Removing Inline Policy from main AD Role - ")
-                  described_instance = ec2_client.describe_instances(Filters=[{'Name':'private-ip-address','Values':[dc_private_ip]}])
+                  described_instance = ec2_client.describe_instances(Filters=[{'Name':'private-ip-address','Values':[mgmnt_ins_private_ip]}])
                   reservations = described_instance['Reservations']
                   instance_profile_arn = ''
                   for reservation in reservations:
@@ -1001,7 +891,7 @@ Resources:
                     tags = described_role_tags['Tags']
                     if tags:
                       for tag in tags:
-                        if tag['Key'] == 'Created_By' and tag['Value'] == 'WorkSpacesQuickstart_SC3b':
+                        if tag['Key'] == 'Created_By' and tag['Value'] == 'WorkSpacesQuickstart_SC3a':
                           logger.info('WorkSpace Tag Found')
                           logger.info('WorkSpaces default Role was created by QuickStart - Hence removing its managed policies')
                           iam_client.detach_role_policy(RoleName='workspaces_DefaultRole',PolicyArn='arn:aws:iam::aws:policy/AmazonWorkSpacesServiceAccess')
@@ -1029,6 +919,7 @@ Resources:
                 else:
                   cfnresponse.send(event, context, cfnresponse.FAILED, {'Response': 'Failure'})
                   raise error
+
   CleanUpLambdaFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -1069,6 +960,8 @@ Resources:
             Action:
             - iam:GetRole
             - iam:DeleteRolePolicy
+            - iam:DetachRolePolicy
+            - iam:ListAttachedRolePolicies
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
           - Effect: Allow
