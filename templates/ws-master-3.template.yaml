@@ -394,57 +394,57 @@ Resources:
             Principal:
               AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
             Action:
-              -	kms:CreateAlias 
-              -	kms:PutKeyPolicy 
-              -	kms:GenerateDataKeyWithoutPlaintext 
-              -	kms:UpdateKeyDescription 
-              -	kms:SynchronizeMultiRegionKey 
-              -	kms:UpdateAlias 
-              -	kms:GetKeyPolicy 
-              -	kms:VerifyMac 
-              -	kms:ListRetirableGrants 
-              -	kms:DeleteImportedKeyMaterial 
-              -	kms:Decrypt 
-              -	kms:DeleteCustomKeyStore 
-              -	kms:Encrypt 
-              -	kms:GetPublicKey 
+              -	kms:CreateAlias
+              -	kms:PutKeyPolicy
+              -	kms:GenerateDataKeyWithoutPlaintext
+              -	kms:UpdateKeyDescription
+              -	kms:SynchronizeMultiRegionKey
+              -	kms:UpdateAlias
+              -	kms:GetKeyPolicy
+              -	kms:VerifyMac
+              -	kms:ListRetirableGrants
+              -	kms:DeleteImportedKeyMaterial
+              -	kms:Decrypt
+              -	kms:DeleteCustomKeyStore
+              -	kms:Encrypt
+              -	kms:GetPublicKey
               -	kms:GenerateDataKeyPair
-              -	kms:ReplicateKey 
-              -	kms:DisableKeyRotation 
+              -	kms:ReplicateKey
+              -	kms:DisableKeyRotation
               -	kms:Sign
-              -	kms:RevokeGrant 
-              -	kms:GenerateDataKeyPairWithoutPlaintext 
-              -	kms:GetParametersForImport 
-              -	kms:GenerateRandom 
-              -	kms:GenerateMac 
+              -	kms:RevokeGrant
+              -	kms:GenerateDataKeyPairWithoutPlaintext
+              -	kms:GetParametersForImport
+              -	kms:GenerateRandom
+              -	kms:GenerateMac
               -	kms:TagResource 
               -	kms:DescribeCustomKeyStores
               -	kms:CancelKeyDeletion
               -	kms:CreateGrant
               -	kms:DescribeKey
               -	kms:ReEncryptFrom
-              -	kms:ListGrants 
-              -	kms:ListKeys 
-              -	kms:ConnectCustomKeyStore 
-              -	kms:UpdatePrimaryRegion 
-              -	kms:GenerateDataKey 
-              -	kms:DeleteAlias 
-              -	kms:ListKeyPolicies 
-              -	kms:UntagResource 
-              -	kms:DisableKey 
-              -	kms:UpdateCustomKeyStore 
-              -	kms:EnableKeyRotation 
-              -	kms:DisconnectCustomKeyStore 
-              -	kms:ImportKeyMaterial 
-              -	kms:CreateKey 
-              -	kms:ListAliases 
-              -	kms:RetireGrant 
-              -	kms:ListResourceTags 
-              -	kms:ScheduleKeyDeletion 
-              -	kms:Verify 
-              -	kms:EnableKey 
-              -	kms:ReEncryptTo 
-              -	kms:GetKeyRotationStatus 
+              -	kms:ListGrants
+              -	kms:ListKeys
+              -	kms:ConnectCustomKeyStore
+              -	kms:UpdatePrimaryRegion
+              -	kms:GenerateDataKey
+              -	kms:DeleteAlias
+              -	kms:ListKeyPolicies
+              -	kms:UntagResource
+              -	kms:DisableKey
+              -	kms:UpdateCustomKeyStore
+              -	kms:EnableKeyRotation
+              -	kms:DisconnectCustomKeyStore
+              -	kms:ImportKeyMaterial
+              -	kms:CreateKey
+              -	kms:ListAliases
+              -	kms:RetireGrant
+              -	kms:ListResourceTags
+              -	kms:ScheduleKeyDeletion
+              -	kms:Verify
+              -	kms:EnableKey
+              -	kms:ReEncryptTo
+              -	kms:GetKeyRotationStatus
               -	kms:CreateCustomKeyStore
             Resource: '*'
           - Sid: Allow administration of the key
