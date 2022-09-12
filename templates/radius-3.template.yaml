@@ -806,6 +806,7 @@ Resources:
       DBClusterIdentifier: !Join ["-", [ "RadiusDB", !Ref "AWS::Region" ]]
       DeletionProtection: false
       EnableHttpEndpoint: true
+      StorageEncrypted: true
       ScalingConfiguration:
         AutoPause: true
         MinCapacity: 1
