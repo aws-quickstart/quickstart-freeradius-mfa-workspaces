@@ -1065,6 +1065,7 @@ Resources:
           Fn::Base64: 
             Fn::Sub:
               AdminUserSecrets=${AdminUserSecrets}
+              DomainUser=${DomainUser}
         TagSpecifications:
           - ResourceType: instance
             Tags:
