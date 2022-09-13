@@ -4,7 +4,8 @@ Description: >-
   Linux instance, RDS and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1td6osa6h)
 Metadata:
   QSLint:
-    Exclusions: [ W9002, W9003, W9006, W2511 ]
+    #'Adding exclusions to resource * for describe IAM actions'
+    Exclusions: [ W9002, W9003, W9006, W2511, W3037 ]
   cfn-lint:
     config:
       ignore_checks:

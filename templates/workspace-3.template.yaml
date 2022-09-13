@@ -10,7 +10,7 @@ Metadata:
     EntrypointName: 'Parameters for Workspace into existing Directory Service.'
     Order: '2'
   QSLint:
-    Exclusions: [ W9002, W9003, W9006, W2511 ]
+    Exclusions: [ W9002, W9003, W9006, W2511, W3037 ]
   cfn-lint:
     config:
       ignore_checks:
