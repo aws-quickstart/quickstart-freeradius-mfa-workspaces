@@ -6,7 +6,7 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'
-    Order: '2'
+    Order: '3'
   QSLint:
     Exclusions: [ W9002, W9003, W9006, W2511 ]
   cfn-lint:
@@ -16,6 +16,7 @@ Metadata:
         - W9006
         - W9002
         - W9003
+        - W9001
       ignore_reason:
         - "Execution part SSM Automation"
   AWS::CloudFormation::Interface:
