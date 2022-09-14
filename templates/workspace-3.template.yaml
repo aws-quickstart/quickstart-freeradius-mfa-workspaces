@@ -520,6 +520,13 @@ Resources:
             Resource: !GetAtt WSDSRole.Arn
   WSDSRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyWildcardResource
+          ignore_reasons:
+            - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
     Properties:
       RoleName: !Sub "WSDSRole-${AWS::StackName}-${AWS::Region}"
       Policies:
