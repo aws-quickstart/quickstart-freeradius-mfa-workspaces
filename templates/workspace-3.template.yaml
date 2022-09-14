@@ -943,6 +943,13 @@ Resources:
     DependsOn:
       - WaitCondition
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyWildcardResource
+          ignore_reasons:
+            - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
