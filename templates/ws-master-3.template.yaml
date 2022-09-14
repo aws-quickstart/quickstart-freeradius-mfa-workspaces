@@ -386,13 +386,13 @@ Resources:
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
   SNSTopicKMSKey:
-  Metadata:
-      cfn-lint:
-        config:
-          ignore_checks:
-            - EIAMPolicyWildcardResource
-          ignore_reasons:
-            - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
+    Metadata:
+        cfn-lint:
+          config:
+            ignore_checks:
+              - EIAMPolicyWildcardResource
+            ignore_reasons:
+              - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
     Type: 'AWS::KMS::Key'
     Properties:
       Description: 'KMS Key for SNS Topic'
