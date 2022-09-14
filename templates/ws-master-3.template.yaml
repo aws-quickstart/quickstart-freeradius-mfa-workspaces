@@ -5,7 +5,7 @@ Description: >-
 Metadata:
   QSLint:
     #'Adding exclusions to resource * for describe IAM actions'
-    Exclusions: [ W9002, W9003, W9006, W2511, W3037, E2507 ]
+    Exclusions: [ W9002, W9003, W9006, W2511, W3037, E2507, E3050 ]
   cfn-lint:
     config:
       ignore_checks:
@@ -13,6 +13,10 @@ Metadata:
         - E0002
         - E9101
         - W9001
+        - E2507
+        - W2511
+        - W3037
+        - E3050
   QuickStartDocumentation:
     EntrypointName: Parameters for deploying MFA enabled Workspaces into existing managed Directory Service.
     Order: '1'
