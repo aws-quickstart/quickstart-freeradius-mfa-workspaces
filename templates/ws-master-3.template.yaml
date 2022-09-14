@@ -5,7 +5,7 @@ Description: >-
 Metadata:
   QSLint:
     #'Adding exclusions to resource * for describe IAM actions'
-    Exclusions: [ W9002, W9003, W9006, W2511, W3037 ]
+    Exclusions: [ W9002, W9003, W9006, W2511, W3037, E2507 ]
   cfn-lint:
     config:
       ignore_checks:
