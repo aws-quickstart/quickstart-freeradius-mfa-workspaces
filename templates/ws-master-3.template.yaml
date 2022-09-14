@@ -393,7 +393,7 @@ Resources:
             - EIAMPolicyWildcardResource
           ignore_reasons:
             - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
-    Type: AWS::KMS::Key
+    Type: 'AWS::KMS::Key'
     Properties:
       Description: 'KMS Key for SNS Topic'
       EnableKeyRotation: true
