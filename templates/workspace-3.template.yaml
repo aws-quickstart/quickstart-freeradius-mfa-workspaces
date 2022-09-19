@@ -4,7 +4,7 @@ Transform:
 Description: >-
   This template creates MFA-enabled WorkSpace for the Domain User specified. 
   **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-xxxx)
+  create a stack from this template. (qs-1teeu2l9b)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for Workspace into existing Directory Service.'
