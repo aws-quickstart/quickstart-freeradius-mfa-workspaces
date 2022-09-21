@@ -60,7 +60,6 @@ Metadata:
       - Label:
           default: SNS/KMS configurations
         Parameters:
-          - SNSKMSKeyAdmin
           - QuickStartAdminEmail
     ParameterLabels:
       VPCCIDR:
@@ -101,8 +100,6 @@ Metadata:
         default: Quick Start S3 bucket region
       QSS3KeyPrefix:
         default: Quick Start S3 key prefix
-      SNSKMSKeyAdmin:
-        default: ARN of Role for SNS Topic KMS Key Administration
       QuickStartAdminEmail:
         default: QuickStart Admin Email for notification to be sent to
 Parameters:
@@ -299,11 +296,7 @@ Parameters:
     MinLength: '5'
     NoEcho: 'true'
     Type: String
-  ## SNS Confgs
-  SNSKMSKeyAdmin:
-    Description: 'ARN of an IAM Role for SNS Topic KMS Key Administration'
-    Type: String
-    AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
+  ## SNS Configuration
   QuickStartAdminEmail:
     Description: 'QuickStart user email that notification will be sent to after successful creation the stack'
     Type: String
@@ -385,6 +378,28 @@ Resources:
             - iam:GetRole
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
+  KMSAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "KMSAdminRole-${AWS::StackName}-${AWS::Region}"
+      Policies:
+        - PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - kms:*
+              Resource: '*'
+          PolicyName: "KMSAdminRole_AssumedRolePolicy"
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - kms.amazonaws.com
+            Action: sts:AssumeRole
   SNSTopicKMSKey:
     Metadata:
         cfn-lint:
@@ -463,7 +478,7 @@ Resources:
           - Sid: Allow administration of the key
             Effect: Allow
             Principal:
-              AWS: !Ref SNSKMSKeyAdmin
+              AWS: !GetAtt KMSAdminRole.Arn
             Action:
               - kms:CreateAlias
               - kms:CreateCustomKeyStore

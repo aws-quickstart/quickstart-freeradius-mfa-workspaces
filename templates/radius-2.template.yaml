@@ -633,7 +633,7 @@ Resources:
                   - |
                     REGION=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
                     # Create Self Signed certificate and Import to ACM 
-                    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout albserver.key -out albserver.crt -subj "/C=US/ST=WA/L=Seattle/O=WorkSpaces/OU=End User Computing/CN=*.$REGION.elb.amazonaws.com"
+                    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout albserver.key -out albserver.crt -subj "/C=US/ST=WA/L=Seattle/O=WorkSpaces/OU=End User Computing/CN=*.$REGION.elb.amazonaws.com"
                     
                     # aws acm import-certificate --certificate file://albserver.crt --private-key file://albserver.key --region $REGION
                     ALBCertArn=$(aws acm import-certificate --certificate file://albserver.crt --private-key file://albserver.key --region $REGION | jq -r .CertificateArn)

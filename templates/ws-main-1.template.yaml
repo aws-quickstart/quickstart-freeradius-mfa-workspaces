@@ -106,7 +106,6 @@ Metadata:
       - Label:
           default: SNS/KMS configurations
         Parameters:
-          - SNSKMSKeyAdmin
           - QuickStartAdminEmail
     ParameterLabels:
       ADServer1InstanceType:
@@ -223,8 +222,6 @@ Metadata:
         default: Use S3 for CA CRL Location
       VPCCIDR:
         default: VPC CIDR
-      SNSKMSKeyAdmin:
-        default: ARN of Role for SNS Topic KMS Key Administration
       QuickStartAdminEmail:
         default: QuickStart Admin Email for notification to be sent to
 Parameters:
@@ -651,11 +648,7 @@ Parameters:
     NoEcho: 'true'
     Type: String
   
-    ## SNS Confgs
-  SNSKMSKeyAdmin:
-    Description: 'Admin Role ARN for SNS Topic KMS Key'
-    Type: String
-    AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
+    ## SNS Configuration
   QuickStartAdminEmail:
     Default: workspaces@example.com
     Description: 'The QuickStart Admin Email that notification will be sent to upon Successful creation'
@@ -838,7 +831,28 @@ Resources:
             - iam:GetRole
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
-  
+  KMSAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "KMSAdminRole-${AWS::StackName}-${AWS::Region}"
+      Policies:
+        - PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - kms:*
+              Resource: '*'
+          PolicyName: "KMSAdminRole_AssumedRolePolicy"
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - kms.amazonaws.com
+            Action: sts:AssumeRole
   SNSTopicKMSKey:
     Type: AWS::KMS::Key
     Properties:
@@ -858,7 +872,7 @@ Resources:
           - Sid: Allow administration of the key
             Effect: Allow
             Principal:
-              AWS: !Ref SNSKMSKeyAdmin
+              AWS: !GetAtt KMSAdminRole.Arn
             Action:
               - 'kms:Create*'
               - 'kms:Describe*'
