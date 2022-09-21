@@ -867,7 +867,7 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-                - kms:*
+                - kms:CreateKey
               Resource: '*'
           PolicyName: "KMSAdminRole_AssumedRolePolicy"
       Path: /service-role/
@@ -900,37 +900,109 @@ Resources:
             Effect: Allow
             Principal:
               AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
-            Action: 'kms:*'
+            Action:
+              - kms:PutKeyPolicy
+              - kms:CreateAlias
+              - kms:GenerateDataKeyWithoutPlaintext
+              - kms:UpdateKeyDescription
+              - kms:SynchronizeMultiRegionKey
+              - kms:UpdateAlias
+              - kms:GetKeyPolicy
+              - kms:VerifyMac
+              - kms:ListRetirableGrants
+              - kms:DeleteImportedKeyMaterial
+              - kms:Decrypt
+              - kms:DeleteCustomKeyStore
+              - kms:Encrypt
+              - kms:GetPublicKey
+              - kms:GenerateDataKeyPair
+              - kms:ReplicateKey
+              - kms:DisableKeyRotation
+              - kms:Sign
+              - kms:RevokeGrant
+              - kms:GenerateDataKeyPairWithoutPlaintext
+              - kms:GetParametersForImport
+              - kms:GenerateRandom
+              - kms:GenerateMac
+              - kms:TagResource 
+              - kms:DescribeCustomKeyStores
+              - kms:CancelKeyDeletion
+              - kms:CreateGrant
+              - kms:DescribeKey
+              - kms:ReEncryptFrom
+              - kms:ListGrants
+              - kms:ListKeys
+              - kms:ConnectCustomKeyStore
+              - kms:UpdatePrimaryRegion
+              - kms:GenerateDataKey
+              - kms:DeleteAlias
+              - kms:ListKeyPolicies
+              - kms:UntagResource
+              - kms:DisableKey
+              - kms:UpdateCustomKeyStore
+              - kms:EnableKeyRotation
+              - kms:DisconnectCustomKeyStore
+              - kms:ImportKeyMaterial
+              - kms:CreateKey
+              - kms:ListAliases
+              - kms:RetireGrant
+              - kms:ListResourceTags
+              - kms:ScheduleKeyDeletion
+              - kms:Verify
+              - kms:EnableKey
+              - kms:ReEncryptTo
+              - kms:GetKeyRotationStatus
+              - kms:CreateCustomKeyStore
             Resource: '*'
           - Sid: Allow administration of the key
             Effect: Allow
             Principal:
               AWS: !GetAtt KMSAdminRole.Arn
             Action:
-              - 'kms:Create*'
-              - 'kms:Describe*'
-              - 'kms:Enable*'
-              - 'kms:List*'
-              - 'kms:Put*'
-              - 'kms:Update*'
-              - 'kms:Revoke*'
-              - 'kms:Disable*'
-              - 'kms:Get*'
-              - 'kms:Delete*'
-              - 'kms:ScheduleKeyDeletion'
-              - 'kms:CancelKeyDeletion'
+              - kms:CreateAlias
+              - kms:CreateCustomKeyStore
+              - kms:CreateKey
+              - kms:CreateGrant
+              - kms:DescribeCustomKeyStores
+              - kms:DescribeKey
+              - kms:EnableKeyRotation
+              - kms:EnableKey
+              - kms:ListKeys
+              - kms:ListGrants
+              - kms:ListResourceTags
+              - kms:ListKeyPolicies
+              - kms:ListRetirableGrants
+              - kms:ListAliases
+              - kms:PutKeyPolicy
+              - kms:UpdateKeyDescription
+              - kms:UpdateAlias
+              - kms:UpdateCustomKeyStore
+              - kms:UpdatePrimaryRegion
+              - kms:RevokeGrant
+              - kms:DisableKeyRotation
+              - kms:DisableKey
+              - kms:GetPublicKey
+              - kms:GetParametersForImport
+              - kms:GetKeyRotationStatus
+              - kms:GetKeyPolicy
+              - kms:DeleteAlias
+              - kms:DeleteImportedKeyMaterial
+              - kms:DeleteCustomKeyStore
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
             Resource: '*'
           - Sid: Allow use of the key
             Effect: Allow
             Principal:
               AWS: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
             Action:
-              - 'kms:DescribeKey'
-              - 'kms:Encrypt'
-              - 'kms:Decrypt'
-              - 'kms:ReEncrypt*'
-              - 'kms:GenerateDataKey'
-              - 'kms:GenerateDataKeyWithoutPlaintext'
+              - kms:DescribeKey
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncryptFrom
+              - kms:ReEncryptTo
+              - kms:GenerateDataKey
+              - kms:GenerateDataKeyWithoutPlaintext
             Resource: '*'
   SNSStackStatusTopic:
     Type: AWS::SNS::Topic

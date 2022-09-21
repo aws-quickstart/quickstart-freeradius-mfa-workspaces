@@ -388,7 +388,7 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-                - kms:*
+                - kms:CreateKey
               Resource: '*'
           PolicyName: "KMSAdminRole_AssumedRolePolicy"
       Path: /service-role/

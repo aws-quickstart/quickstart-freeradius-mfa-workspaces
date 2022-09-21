@@ -19,7 +19,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-      - Label:
           default: VPC Configuration.
         Parameters:
           - VPCID
