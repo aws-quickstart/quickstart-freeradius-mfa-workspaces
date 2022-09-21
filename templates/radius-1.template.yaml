@@ -6,7 +6,7 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'
-    Order: '2'
+    Order: '3'
   cfn-lint:
     config:
       ignore_checks:

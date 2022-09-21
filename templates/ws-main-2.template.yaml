@@ -8,12 +8,14 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying AWS Managed Microsoft AD into a new VPC'
-    Order: '2'
+    Order: '1'
   cfn-lint:
     config:
       ignore_checks:
         - E9101
         - W9006
+        - E0002
+        - W9001
       ignore_reason:
         - "Execution part SSM Automation"
         - "Referenced file does not have parameter, "
@@ -786,6 +788,13 @@ Resources:
                 - kms.amazonaws.com
             Action: sts:AssumeRole
   SNSTopicKMSKey:
+    Metadata:
+        cfn-lint:
+          config:
+            ignore_checks:
+              - EIAMPolicyWildcardResource
+            ignore_reasons:
+              - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
     Type: AWS::KMS::Key
     Properties:
       Description: 'KMS Key for SNS Topic'
