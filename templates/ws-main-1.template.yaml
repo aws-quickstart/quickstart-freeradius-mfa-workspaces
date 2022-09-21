@@ -302,6 +302,13 @@ Parameters:
     Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
     Type: String
+  ADServerEnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   AvailabilityZones:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note, The logical order is preserved and only 2 AZs are used for this deployment. You must choose Availability Zones supported by Amazon WorkSpaces.'
     Type: List<AWS::EC2::AvailabilityZone::Name>
@@ -721,16 +728,33 @@ Resources:
         ADServer2InstanceType: !Ref 'ADServer2InstanceType'
         ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
         ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        EnableAdvancedAudtingandMetrics: !Ref ADServerEnableAdvancedAudtingandMetrics
         DomainAdminPassword: !Ref 'DomainAdminPassword'
         DomainAdminUser: !Ref 'DomainAdminUser'
+        CreateDefaultOUs: !Ref 'CreateDefaultOUs'
+        DHCPOptionSet: !Ref DHCPOptionSet
+        CaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        CaHashAlgorithm: !Ref CaHashAlgorithm
+        CaKeyLength: !Ref CaKeyLength
+        CaServerInstanceType: !Ref CaServerInstanceType
+        CaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
+        OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
+        PKI: !Ref PKI
+        DataDriveSizeGiB: !Ref DataDriveSizeGiB
+        DeletedObjectLifetime: !Ref DeletedObjectLifetime
         DomainDNSName: !Ref 'DomainDNSName'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        EntCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
         KeyPairName: !Ref 'KeyPairName'
         PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-activedirectory/'
+        S3CRLBucketName: !Ref S3CRLBucketName
+        TombstoneLifetime: !Ref TombstoneLifetime
+        UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
   
@@ -1013,7 +1037,6 @@ Resources:
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        DomainUser: !Ref 'DomainUser'
         DomainUserSecretsArn: !GetAtt 'WorkSpaceStack.Outputs.DomainUserSecretsArn'
         VPCCIDR: !Ref 'VPCCIDR'
         LinOTPDBName: !Ref 'LinOTPDBName'

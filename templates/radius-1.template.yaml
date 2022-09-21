@@ -19,28 +19,15 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
-        Parameters:
-          - DomainUser
-      - Label:
           default: VPC Configuration.
         Parameters:
           - VPCID
     ParameterLabels:
-      DomainUser:
-        default: Normal Domain user that will be used to configure LinOTP LDAP connection
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
 Parameters:
-  DomainUser:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: JaneDoe
-    Description: Username for the AD account that WorkSpace will be launched for
-    MaxLength: '25'
-    MinLength: '5'
-    Type: String
   LinOTPDBName:
     Type: String
     Default: LINOTP
@@ -812,6 +799,7 @@ Resources:
       DBClusterIdentifier: !Join ["-", [ "RadiusDB", !Ref "AWS::Region" ]]
       DeletionProtection: false
       EnableHttpEndpoint: true
+      StorageEncrypted: true
       ScalingConfiguration:
         AutoPause: true
         MinCapacity: 1
