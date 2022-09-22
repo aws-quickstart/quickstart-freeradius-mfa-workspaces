@@ -816,11 +816,7 @@ Resources:
   
   RadiusStack:
     DependsOn: 
-      - ADStack
-      - Macro
       - WorkSpaceStack
-      - SNSStackStatusTopic
-      - SNSDeliveryLambdaExecutionRole
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
