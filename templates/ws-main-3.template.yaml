@@ -186,9 +186,9 @@ Parameters:
     Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
     Type: Number
   BundleId:
-    Default: 'wsb-gm4d5tx2v'
+    Default: 'wsb-fn373c5rw'
     AllowedPattern: '^wsb-[0-9a-z]{8,63}$'
-    Description: The identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles.
+    Description: he identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles. The provided bundle ID is for PCoIP streaming protocol.
     Type: String
   ComputeTypeName:
     Default: 'PERFORMANCE'
@@ -378,191 +378,7 @@ Resources:
             - iam:GetRole
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
-  KMSAdminRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "KMSAdminRole-${AWS::StackName}-${AWS::Region}"
-      Policies:
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-                - kms:CreateKey
-              Resource: '*'
-          PolicyName: "KMSAdminRole_AssumedRolePolicy"
-      Path: /service-role/
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: 
-                - kms.amazonaws.com
-            Action: sts:AssumeRole
-  SNSTopicKMSKey:
-    Metadata:
-        cfn-lint:
-          config:
-            ignore_checks:
-              - EIAMPolicyWildcardResource
-            ignore_reasons:
-              - EIAMPolicyWildcardResource: "Scope is limited to least privilege"
-    Type: 'AWS::KMS::Key'
-    Properties:
-      Description: 'KMS Key for SNS Topic'
-      EnableKeyRotation: true
-      PendingWindowInDays: 20
-      KeyPolicy:
-        Version: 2012-10-17
-        Id: key-default-1
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
-            Action:
-              - kms:PutKeyPolicy
-              - kms:CreateAlias
-              - kms:GenerateDataKeyWithoutPlaintext
-              - kms:UpdateKeyDescription
-              - kms:SynchronizeMultiRegionKey
-              - kms:UpdateAlias
-              - kms:GetKeyPolicy
-              - kms:VerifyMac
-              - kms:ListRetirableGrants
-              - kms:DeleteImportedKeyMaterial
-              - kms:Decrypt
-              - kms:DeleteCustomKeyStore
-              - kms:Encrypt
-              - kms:GetPublicKey
-              - kms:GenerateDataKeyPair
-              - kms:ReplicateKey
-              - kms:DisableKeyRotation
-              - kms:Sign
-              - kms:RevokeGrant
-              - kms:GenerateDataKeyPairWithoutPlaintext
-              - kms:GetParametersForImport
-              - kms:GenerateRandom
-              - kms:GenerateMac
-              - kms:TagResource 
-              - kms:DescribeCustomKeyStores
-              - kms:CancelKeyDeletion
-              - kms:CreateGrant
-              - kms:DescribeKey
-              - kms:ReEncryptFrom
-              - kms:ListGrants
-              - kms:ListKeys
-              - kms:ConnectCustomKeyStore
-              - kms:UpdatePrimaryRegion
-              - kms:GenerateDataKey
-              - kms:DeleteAlias
-              - kms:ListKeyPolicies
-              - kms:UntagResource
-              - kms:DisableKey
-              - kms:UpdateCustomKeyStore
-              - kms:EnableKeyRotation
-              - kms:DisconnectCustomKeyStore
-              - kms:ImportKeyMaterial
-              - kms:CreateKey
-              - kms:ListAliases
-              - kms:RetireGrant
-              - kms:ListResourceTags
-              - kms:ScheduleKeyDeletion
-              - kms:Verify
-              - kms:EnableKey
-              - kms:ReEncryptTo
-              - kms:GetKeyRotationStatus
-              - kms:CreateCustomKeyStore
-            Resource: '*'
-          - Sid: Allow administration of the key
-            Effect: Allow
-            Principal:
-              AWS: !GetAtt KMSAdminRole.Arn
-            Action:
-              - kms:CreateAlias
-              - kms:CreateCustomKeyStore
-              - kms:CreateKey
-              - kms:CreateGrant
-              - kms:DescribeCustomKeyStores
-              - kms:DescribeKey
-              - kms:EnableKeyRotation
-              - kms:EnableKey
-              - kms:ListKeys
-              - kms:ListGrants
-              - kms:ListResourceTags
-              - kms:ListKeyPolicies
-              - kms:ListRetirableGrants
-              - kms:ListAliases
-              - kms:PutKeyPolicy
-              - kms:UpdateKeyDescription
-              - kms:UpdateAlias
-              - kms:UpdateCustomKeyStore
-              - kms:UpdatePrimaryRegion
-              - kms:RevokeGrant
-              - kms:DisableKeyRotation
-              - kms:DisableKey
-              - kms:GetPublicKey
-              - kms:GetParametersForImport
-              - kms:GetKeyRotationStatus
-              - kms:GetKeyPolicy
-              - kms:DeleteAlias
-              - kms:DeleteImportedKeyMaterial
-              - kms:DeleteCustomKeyStore
-              - kms:ScheduleKeyDeletion
-              - kms:CancelKeyDeletion
-            Resource: '*'
-          - Sid: Allow use of the key
-            Effect: Allow
-            Principal:
-              AWS: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
-            Action:
-              - kms:DescribeKey
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncryptFrom
-              - kms:ReEncryptTo
-              - kms:GenerateDataKey
-              - kms:GenerateDataKeyWithoutPlaintext
-            Resource: '*'
-  SNSStackStatusTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: !Sub '${AWS::StackName}-SNS-Topic'
-      KmsMasterKeyId: !GetAtt SNSTopicKMSKey.KeyId
-      Subscription:
-        - Endpoint: !Ref QuickStartAdminEmail
-          Protocol: email
-  SNSDeliveryLambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: sns-delivery-lambda-execution-role-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-              Resource:
-              - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
-            - Effect: Allow
-              Action:
-               -  'sns:Publish'
-              Resource:
-               -  !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-SNS-Topic'
+
   DomainUserSecrets:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -590,9 +406,20 @@ Resources:
       Name: /LinOTP/Config/extAD/DirectoryID
       Type: String
       Value: !Ref DirectoryID
+
+  NotifyStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/notification.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        QuickStartAdminEmail: !Ref QuickStartAdminEmail
   WorkSpacesStack:
     DependsOn:
       - Macro
+      - NotifyStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
@@ -616,8 +443,8 @@ Resources:
         RootVolumeEncryptionEnabled: !Ref 'RootVolumeEncryptionEnabled'
         SNSDeliveryLambdaExecutionRoleExportName: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
         SNSStackStatusTopicExportName: !Sub '${AWS::StackName}-SNSStackStatusTopic'
-        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
-        SNSStackStatusTopicExportValue: !Ref SNSStackStatusTopic
+        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt 'NotifyStack.Outputs.SNSDeliveryLambdaExecutionRole'
+        SNSStackStatusTopicExportValue: !GetAtt 'NotifyStack.Outputs.SNSStackTopic'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
   RadiusStack:
