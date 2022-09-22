@@ -6,7 +6,7 @@ project:
   regions:
   - us-west-2
   - us-east-1
-  template: ./templates/ws-master-2.template.yaml
+  template: ./templates/ws-main-2.template.yaml
   s3_regional_buckets:  true
 tests:
   SC1:
