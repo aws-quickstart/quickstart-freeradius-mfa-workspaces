@@ -829,7 +829,6 @@ Resources:
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        DomainUser: !Ref 'DomainUser'
         AdminUserSecrets: !GetAtt 'ADStack.Outputs.ADSecretsArn'
         VPCCIDR: !Ref 'VPCCIDR'
         RADIUSServerInstanceType: !Ref 'RADIUSServerInstanceType'
