@@ -6,7 +6,7 @@ project:
   regions:
   - us-west-2
   - us-east-1
-  template: ./templates/ws-master-2.template.yaml
+  template: ./templates/ws-main-2.template.yaml
   s3_regional_buckets:  true
 tests:
   SC1:
@@ -49,10 +49,9 @@ tests:
       LinOTPReamlName: MyADRealm
       EnableSelfService: 'true'
       EnableWorkDocs: 'false'
-      SNSKMSKeyAdmin: 'arn:aws:iam::123456789012:role/TaskCatAdmin'
     regions:
     - us-west-2
-    template: ./templates/ws-master-1.template.yaml
+    template: ./templates/ws-main-1.template.yaml
   SC2:
     parameters:
       AvailabilityZones: us-east-1b,us-east-1c
@@ -88,7 +87,6 @@ tests:
       LinOTPReamlName: MyADRealm
       EnableSelfService: 'true'
       EnableWorkDocs: 'false'
-      SNSKMSKeyAdmin: 'arn:aws:iam::123456789012:role/TaskCatAdmin'
     regions:
     - us-east-1
-    template: ./templates/ws-master-2.template.yaml
+    template: ./templates/ws-main-2.template.yaml

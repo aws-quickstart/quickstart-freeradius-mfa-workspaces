@@ -1,12 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  This template creates Aurora RDS database, integrates LinOTP with the deployed Active Directory and configures FreeRADIUS server. The created domain user credentials will be used to configure AD integration. 
-  **WARNING** This template creates Amazon EC2 Linux instance, RDS database and related resources. You will be billed for the AWS resources used if you
-  create a stack from this template. (qs-1t9sl8r34)
+  This template creates Aurora Serveless database, configures LinOTP and FreeRADIUS server. 
+  **WARNING** This template creates Amazon EC2 Windows instance and related resources. You will be billed for the AWS resources used if you
+  create a stack from this template. (qs-1teeu2lc0)
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'
     Order: '3'
+  QSLint:
+    Exclusions: [ W9002, W9003, W9006, W2511, W3037 ]
   cfn-lint:
     config:
       ignore_checks:
@@ -14,20 +16,34 @@ Metadata:
         - W9006
         - W9002
         - W9003
+        - W9001
       ignore_reason:
         - "Execution part SSM Automation"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: Microsoft Active Directory Domain Services Configuration
+        Parameters:
+          - DomainUser
+      - Label:
           default: VPC Configuration.
         Parameters:
           - VPCID
     ParameterLabels:
+      DomainUser:
+        default: Normal Domain user that will be used to configure LinOTP LDAP connection
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
 Parameters:
+  DomainUser:
+    AllowedPattern: '[a-zA-Z0-9]*'
+    Default: JaneDoe
+    Description: Username for the AD account that WorkSpace will be launched for
+    MaxLength: '25'
+    MinLength: '5'
+    Type: String
   LinOTPDBName:
     Type: String
     Default: LINOTP
@@ -47,10 +63,10 @@ Parameters:
     MinLength: '5'
     NoEcho: 'true'
     Type: String
-  DomainUserSecretsArn:
+  AdminUserSecrets:
     Type: String
-    Default: DomainUserSecrets
-    Description: ARN of Domain User Secrets
+    Default: AdminUserSecrets
+    Description: ARN of default Admin Domain User Secrets
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: AWS::EC2::KeyPair::KeyName
@@ -79,10 +95,6 @@ Parameters:
     MaxLength: '15'
     MinLength: '1'
     Type: String
-  EbsEncryptionKmsKeyId:
-    Default: alias/aws/ebs
-    Description: The identifier of the AWS KMS key to use for Amazon EBS encryption. You can specify the KMS key using any of the following; Key ID, Key alias, Key ARN, Alias ARN
-    Type: String
   VPCID:
     Default: 'vpc-xxxxx'
     Description: VPC ID for Workspaces
@@ -94,10 +106,10 @@ Parameters:
     Description: CIDR Block for the VPC
     Type: String
   PrivateSubnet1ID:
-    Description: Choose the ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Description: Choose the WorkSpaces private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PrivateSubnet2ID:
-    Description: Choose the ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
+    Description: CChoose the WorkSpaces private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
   PublicSubnet1ID:
     Description: ID of the public subnet 1 that you will be used for ALB(for example, subnet-a0246dcd).
@@ -118,7 +130,7 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   SNSDeliveryLambdaExecutionRole:
-    Description: Execution role for SNS publisher Lambda 
+    Description: Execution role for SNS publisher in Lambda 
     Type: String
     Default: ''
   SNSStackStatusTopic:
@@ -136,12 +148,12 @@ Resources:
         - Key: StackName
           Value: !Ref AWS::StackName
       Content:
-        description: Configures LinOTP DB and installs FreeRADIUS
+        description: Configures LinOTP Database, installs FreeRADIUS and enables MFA on the Directory Service
         schemaVersion: '0.3'
         assumeRole: '{{AutomationAssumeRole}}'
         parameters:
           InstanceId:
-            description: "ID of the instance."
+            description: "ID of the RADIUS EC2 instance."
             type: "String" 
           ASGName:
             description: "Auto Scaling group name."
@@ -253,7 +265,7 @@ Resources:
                     REGION=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
                     DB_NAME=LINOTP
                     DB_USER=linotp
-                    DB_HOST=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/DB/RDSEndpoint" | jq -r '.Parameter.Value')
+                    DB_HOST=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/DB/SC2/RDSEndpoint" | jq -r '.Parameter.Value')
                     SECRET_ID=MFADBSecret
 
                     echo -e "Welcome to the database setup script for LinOTP!"
@@ -392,24 +404,22 @@ Resources:
                     AdminPassword=LinOTPAdminSecret
                     LinOTPADMINPASSWORD=$(aws secretsmanager get-secret-value --region $REGION --secret-id $AdminPassword | jq -r .SecretString | jq -r .password)
 
-                    ADUSER=DomainUserSecret
+                    ADUSER=$(curl http://169.254.169.254/latest/user-data | grep -Po 'AdminUserSecrets=\K[^ ]+')
+                    ADUSERPASS=$(aws secretsmanager get-secret-value --region $REGION --secret-id $ADUSER --query SecretString --output text | grep -o '"password":"[^"]*' |  grep -o '[^"]*$')
+
+                    BINDDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/BindDN" | jq -r '.Parameter.Value')
+                    BASEDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/BaseDN" | jq -r '.Parameter.Value')
                     
-
-                    ADUSERPASS=$(aws secretsmanager get-secret-value --region $REGION --secret-id $ADUSER | jq -r .SecretString | jq -r .password)
-                    BINDDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/BindDN" | jq -r '.Parameter.Value')
-                    BASEDN=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/BaseDN" | jq -r '.Parameter.Value')
-                    DNSSERVERS=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/AD/DNSServers" | jq -r '.Parameter.Value')
-
+                    DNSSERVERS=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DNSServers" | jq -r '.Parameter.Value')
                     DNS1=$(echo $DNSSERVERS | grep -E -o "^([0-9]{1,3}[\.]){3}[0-9]{1,3}")
                     DNS2=$(echo $DNSSERVERS | grep -E -o "(([0-9]{1,3}[\.]){3}[0-9]{1,3})$")
 
                     LDAP1=$(echo "ldap://${DNS1}")
                     LDAP2=$(echo "ldap://${DNS2}")
                     LOCALIP=$(hostname)
-                    
                     URL=$(echo "https://$LOCALIP:443")
 
-                    RealmName=LinOTPReamlNameSecret
+                    RealmName=LinOTPRealmNameSecret
                     CXRealmName=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RealmName | jq -r .SecretString | jq -r .password)
 
                     # ADMINPASS=$(aws secretsmanager get-secret-value --region $REGION --secret-id $SECRET_ID | jq -r .SecretString | jq -r .password)
@@ -492,7 +502,7 @@ Resources:
                 - |
                   # Configure Perl module for FreeRADIUS
                   REGION=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
-                  RealmName=LinOTPReamlNameSecret
+                  RealmName=LinOTPRealmNameSecret
                   CXRealmName=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RealmName | jq -r .SecretString | jq -r .password)
 
                   sudo cat <<-EOF >/etc/linotp2/rlm_perl.ini
@@ -638,8 +648,8 @@ Resources:
                     # Add LinOTP ALBArn HTTPS Listener
                     aws elbv2 create-listener --load-balancer-arn $ALBArn --protocol HTTPS --port 443 --certificates CertificateArn=$ALBCertArn --ssl-policy ELBSecurityPolicy-2015-05 --default-actions Type=forward,TargetGroupArn=$ALBTGArn --region $REGION
             
-            description: This step will create self-signed certificate, import to ACM and use it to create https Listerner in ALB
-
+            description: This step will create self-signed certificate, import to ACM and use it to create https Listerner in ALB.
+          
           - name: UpdateALBListener
             action: 'aws:runCommand'
             nextStep: EnableRADIUS
@@ -668,7 +678,7 @@ Resources:
                     
                     # Update ALB HTTPS Listener if Adding new one failed. This is useful if the instance terminates and automation needs to rerun. 
                     aws elbv2 modify-listener --listener-arn $ALBListerARN --certificates CertificateArn=$ALBCertArn --region $REGION
-            
+            description: This step will create self-signed certificate, import to ACM and update the ALB HTTPS Listerner if one exists. 
 
           - name: EnableRADIUS
             action: 'aws:runCommand'
@@ -688,7 +698,7 @@ Resources:
                     VPCIP="$(cut -d'/' -f1 <<<"$CIDR")"
                     HOSTIP=$(hostname -I | awk '{print $1}')
                     RADSECRET=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RADSECRET_ID | jq -r .SecretString | jq -r .password)
-                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "WSDirectoryId" | jq -r '.Parameter.Value')
+                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DirectoryID" | jq -r '.Parameter.Value')
                     
                     aws ds enable-radius --directory-id=$DIRECTORYID --radius-settings RadiusServers=$HOSTIP,RadiusPort=1812,RadiusTimeout=50,RadiusRetries=4,SharedSecret=$RADSECRET,AuthenticationProtocol=PAP,DisplayLabel=FreeRADIUS --region=$REGION
 
@@ -711,7 +721,7 @@ Resources:
                     VPCIP="$(cut -d'/' -f1 <<<"$CIDR")"
                     HOSTIP=$(hostname -I | awk '{print $1}')
                     RADSECRET=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RADSECRET_ID | jq -r .SecretString | jq -r .password)
-                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "WSDirectoryId" | jq -r '.Parameter.Value')
+                    DIRECTORYID=$(aws ssm get-parameter --region $REGION --name "/LinOTP/Config/extAD/DirectoryID" | jq -r '.Parameter.Value')
                     
                     aws ds update-radius --directory-id=$DIRECTORYID --radius-settings RadiusServers=$HOSTIP,RadiusPort=1812,RadiusTimeout=50,RadiusRetries=4,SharedSecret=$RADSECRET,AuthenticationProtocol=PAP,DisplayLabel=FreeRADIUS --region=$REGION
 
@@ -780,11 +790,11 @@ Resources:
       Description: LinOTP Admin User Secrets for LinOTP Portal
       SecretString: !Sub '{"username":"admin","password":"${LinOTPAdminPassword}"}'
 
-  LinOTPReamlNameSecret:
+  LinOTPRealmNameSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: LinOTPReamlNameSecret
-      Description: Realm Name for LinOTP/LDAP Integration 
+      Name: LinOTPRealmNameSecret
+      Description: Realm name for LinOTP/LDAP Integration 
       SecretString: !Sub '{"name":"Realm Name","password":"${LinOTPReamlName}"}'
 
   RADIUSDBCluster:
@@ -807,9 +817,9 @@ Resources:
         SecondsUntilAutoPause: 1000
       DBSubnetGroupName: !Ref DBSubnetGroup
       VpcSecurityGroupIds:
-      - !GetAtt DBEC2SecurityGroup.GroupId
+      - !GetAtt RadiusClusterDBSecurityGroup.GroupId
 
-  DBEC2SecurityGroup:
+  RadiusClusterDBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: EC2 Security Group for RDS Database
@@ -831,11 +841,10 @@ Resources:
   RDSEndpoint:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /LinOTP/Config/DB/RDSEndpoint
+      Name: /LinOTP/Config/DB/SC2/RDSEndpoint
       Type: StringList
       Value: !GetAtt RADIUSDBCluster.Endpoint.Address
-      Description: SSM Parameter of type StringList.
-
+      Description: RDS Endpoint saved in SSM Parameter Store. 
   RADSVRRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -868,10 +877,10 @@ Resources:
                   - secretsmanager:ListSecrets
                 Resource:
                   - !Ref 'RDSSecret'
-                  - !Ref 'DomainUserSecretsArn'
+                  - !Ref 'AdminUserSecrets'
                   - !Ref 'RADIUSSharedSecret'
                   - !Ref 'LinOTPAdminSecret'
-                  - !Ref 'LinOTPReamlNameSecret'
+                  - !Ref 'LinOTPRealmNameSecret'
           PolicyName: SecretsAccessPolicy
         - PolicyDocument:
             Version: '2012-10-17'
@@ -902,7 +911,7 @@ Resources:
                   - ssm:GetParameter
                 Resource:
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/LinOTP/Config/AD/*
-                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/WSDirectoryId
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/LinOTP/Config/extAD/DirectoryID/*
           PolicyName: AWS-SSM-Automation-Policy
         - PolicyDocument:
             Version: '2012-10-17'
@@ -1052,10 +1061,14 @@ Resources:
               VolumeType: gp2
               DeleteOnTermination: true
               Encrypted: true
-              KmsKeyId: !Ref EbsEncryptionKmsKeyId
             DeviceName: /dev/xvdh
         ImageId: !Ref LinuxLatestAMI
         InstanceType: !Ref RADIUSServerInstanceType
+        UserData:
+          Fn::Base64: 
+            Fn::Sub:
+              AdminUserSecrets=${AdminUserSecrets}
+              DomainUser=${DomainUser}
         TagSpecifications:
           - ResourceType: instance
             Tags:
@@ -1088,6 +1101,7 @@ Resources:
       ResourceSignal:
         Count: '1'
         Timeout: PT15M
+
   RADIUSEventBridgeResource:
     Type: AWS::Events::Rule
     Properties:
@@ -1145,7 +1159,7 @@ Resources:
           ToPort: 22
           CidrIp: !Ref SSHLocation
   
-  # Notification SNS Part
+  # Notification SNS
   SNSMessagePublisher:
     DependsOn:
       - RadiusServerAutoScalingGroup
@@ -1195,7 +1209,7 @@ Resources:
                       
                   Thank you for deploying {solution_name}.
                     
-                  This is to confirm that MFA-enabled WorkSpace has been successfully provisioned for you and is ready to use.
+                  This messages confirms MFA-enabled WorkSpace has been successfully provisioned for your use.
 
                   Your WorkSpace Registration Code is: {reg_code}
 
@@ -1203,12 +1217,12 @@ Resources:
 
                   Your Username is: {wsusername} 
                   
-                  Your Password can be accessed in AWS Secrets Manager.
+                  Your Password can be accessed in AWS Secrets Manager. If you do not have access, please contact your admin. 
 
-                  The Portal where you need to perform MFA token registration can be accessed via: {linotpportal}. 
-                  You will be required to login with your username and password. 
+                  The Portal where you need to perform MFA token registration can be accessed via: {linotpportal}.  
+                  You will be required to login with your domain username and password. 
 
-                  You can download Amazon WorkSpaces client from: https://clients.amazonworkspaces.com/.
+                  You can download the latest Amazon WorkSpaces client from: https://clients.amazonworkspaces.com/.
 
                   Should face any issue or require further assistance, please to reach out to your IT Admin.
 
@@ -1234,6 +1248,7 @@ Resources:
       FunctionName: !GetAtt SNSDeliveryLambda.Arn
       SourceArn: !Sub ${AWS::StackId}
       SourceAccount: !Sub ${AWS::AccountId}
+
 Outputs:
   RADIUSSharedSecret:
     Description: Shared Secret ARN for RADIUS Server.

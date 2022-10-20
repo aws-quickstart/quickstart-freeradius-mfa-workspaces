@@ -7,12 +7,14 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying self-managed AD into a new VPC'
-    Order: '2'
+    Order: '1'
   cfn-lint:
     config:
       ignore_checks:
         - E9101
         - W9006
+        - E0002
+        - W9001
       ignore_reason:
         - "Execution part SSM Automation"
         - "Referenced file does not have parameter, "
@@ -106,7 +108,6 @@ Metadata:
       - Label:
           default: SNS/KMS configurations
         Parameters:
-          - SNSKMSKeyAdmin
           - QuickStartAdminEmail
     ParameterLabels:
       ADServer1InstanceType:
@@ -223,8 +224,6 @@ Metadata:
         default: Use S3 for CA CRL Location
       VPCCIDR:
         default: VPC CIDR
-      SNSKMSKeyAdmin:
-        default: ARN of Role for SNS Topic KMS Key Administration
       QuickStartAdminEmail:
         default: QuickStart Admin Email for notification to be sent to
 Parameters:
@@ -303,6 +302,13 @@ Parameters:
     Default: 10.0.32.10
     Description: Fixed private IP for the second Active Directory Domain Controller located in Availability Zone 2 Availability Zone 2
     Type: String
+  ADServerEnableAdvancedAudtingandMetrics:
+    Description: Enable advanced auditing and metrics and upload them to CloudWatch using the Amazon Kinesis Agent for Microsoft Windows
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Type: String
+    Default: 'false'
   AvailabilityZones:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note, The logical order is preserved and only 2 AZs are used for this deployment. You must choose Availability Zones supported by Amazon WorkSpaces.'
     Type: List<AWS::EC2::AvailabilityZone::Name>
@@ -606,9 +612,9 @@ Parameters:
     Description: The size of the user storage. See here allowed user/root volume mappings - https://docs.aws.amazon.com/workspaces/latest/adminguide/modify-workspaces.html#change_volume_sizes
     Type: Number
   BundleId:
-    Default: 'wsb-gm4d5tx2v'
+    Default: 'wsb-fn373c5rw'
     AllowedPattern: '^wsb-[0-9a-z]{8,63}$'
-    Description: The identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles.
+    Description: The identifier of the bundle for the WorkSpace. You can use DescribeWorkspaceBundles to list the available bundles. The provided bundle ID is for PCoIP streaming protocol. 
     Type: String
   ComputeTypeName:
     Default: 'PERFORMANCE'
@@ -651,11 +657,7 @@ Parameters:
     NoEcho: 'true'
     Type: String
   
-    ## SNS Confgs
-  SNSKMSKeyAdmin:
-    Description: 'Admin Role ARN for SNS Topic KMS Key'
-    Type: String
-    AllowedPattern: '^arn:aws:iam::\d{12}:role/.+'
+    ## SNS Configuration
   QuickStartAdminEmail:
     Default: workspaces@example.com
     Description: 'The QuickStart Admin Email that notification will be sent to upon Successful creation'
@@ -726,16 +728,33 @@ Resources:
         ADServer2InstanceType: !Ref 'ADServer2InstanceType'
         ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
         ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
+        EnableAdvancedAudtingandMetrics: !Ref ADServerEnableAdvancedAudtingandMetrics
         DomainAdminPassword: !Ref 'DomainAdminPassword'
         DomainAdminUser: !Ref 'DomainAdminUser'
+        CreateDefaultOUs: !Ref 'CreateDefaultOUs'
+        DHCPOptionSet: !Ref DHCPOptionSet
+        CaDataDriveSizeGiB: !Ref CaDataDriveSizeGiB
+        CaHashAlgorithm: !Ref CaHashAlgorithm
+        CaKeyLength: !Ref CaKeyLength
+        CaServerInstanceType: !Ref CaServerInstanceType
+        CaValidityPeriodUnits: !Ref CaValidityPeriodUnits
+        OrCaServerNetBIOSName: !Ref OrCaServerNetBIOSName
+        OrCaValidityPeriodUnits: !Ref OrCaValidityPeriodUnits
+        PKI: !Ref PKI
+        DataDriveSizeGiB: !Ref DataDriveSizeGiB
+        DeletedObjectLifetime: !Ref DeletedObjectLifetime
         DomainDNSName: !Ref 'DomainDNSName'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        EntCaServerNetBIOSName: !Ref EntCaServerNetBIOSName
         KeyPairName: !Ref 'KeyPairName'
         PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3BucketRegion: !Ref 'QSS3BucketRegion'
         QSS3KeyPrefix: !Sub '${QSS3KeyPrefix}submodules/quickstart-microsoft-activedirectory/'
+        S3CRLBucketName: !Ref S3CRLBucketName
+        TombstoneLifetime: !Ref TombstoneLifetime
+        UseS3ForCRL: !Ref UseS3ForCRL
         VPCCIDR: !Ref 'VPCCIDR'
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
   
@@ -838,95 +857,20 @@ Resources:
             - iam:GetRole
             Resource:
             - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*
-  
-  SNSTopicKMSKey:
-    Type: AWS::KMS::Key
+  NotifyStack:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Description: 'KMS Key for SNS Topic'
-      EnableKeyRotation: true
-      PendingWindowInDays: 20
-      KeyPolicy:
-        Version: 2012-10-17
-        Id: key-default-1
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
-            Action: 'kms:*'
-            Resource: '*'
-          - Sid: Allow administration of the key
-            Effect: Allow
-            Principal:
-              AWS: !Ref SNSKMSKeyAdmin
-            Action:
-              - 'kms:Create*'
-              - 'kms:Describe*'
-              - 'kms:Enable*'
-              - 'kms:List*'
-              - 'kms:Put*'
-              - 'kms:Update*'
-              - 'kms:Revoke*'
-              - 'kms:Disable*'
-              - 'kms:Get*'
-              - 'kms:Delete*'
-              - 'kms:ScheduleKeyDeletion'
-              - 'kms:CancelKeyDeletion'
-            Resource: '*'
-          - Sid: Allow use of the key
-            Effect: Allow
-            Principal:
-              AWS: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
-            Action:
-              - 'kms:DescribeKey'
-              - 'kms:Encrypt'
-              - 'kms:Decrypt'
-              - 'kms:ReEncrypt*'
-              - 'kms:GenerateDataKey'
-              - 'kms:GenerateDataKeyWithoutPlaintext'
-            Resource: '*'
-  SNSStackStatusTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: !Sub '${AWS::StackName}-SNS-Topic'
-      KmsMasterKeyId: !GetAtt SNSTopicKMSKey.KeyId
-      Subscription:
-        - Endpoint: !Ref QuickStartAdminEmail
-          Protocol: email
-  SNSDeliveryLambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: sns-delivery-lambda-execution-role-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-              Resource:
-              - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
-            - Effect: Allow
-              Action:
-               -  'sns:Publish'
-              Resource:
-               -  !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-SNS-Topic'
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/notification.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref AWS::Region, !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        QuickStartAdminEmail: !Ref QuickStartAdminEmail
   WorkSpaceStack:
     DependsOn: 
       - ADStack
       - Macro
+      - NotifyStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
@@ -969,8 +913,8 @@ Resources:
         PublicSubnet3CIDR: !Ref PublicSubnet3CIDR
         SNSDeliveryLambdaExecutionRoleExportName: !Sub '${AWS::StackName}-LambdaSNSPublisherRole'
         SNSStackStatusTopicExportName: !Sub '${AWS::StackName}-SNSStackStatusTopic'
-        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt SNSDeliveryLambdaExecutionRole.Arn
-        SNSStackStatusTopicExportValue: !Ref SNSStackStatusTopic
+        SNSDeliveryLambdaExecutionRoleExportValue: !GetAtt 'NotifyStack.Outputs.SNSDeliveryLambdaExecutionRole'
+        SNSStackStatusTopicExportValue: !GetAtt 'NotifyStack.Outputs.SNSStackTopic'
         QSS3BucketName: !Ref 'QSS3BucketName'
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
   RadiusStack:
@@ -990,7 +934,6 @@ Resources:
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'
-        DomainUser: !Ref 'DomainUser'
         DomainUserSecretsArn: !GetAtt 'WorkSpaceStack.Outputs.DomainUserSecretsArn'
         VPCCIDR: !Ref 'VPCCIDR'
         LinOTPDBName: !Ref 'LinOTPDBName'

@@ -6,7 +6,7 @@ Description: >-
 Metadata:
   QuickStartDocumentation:
     EntrypointName: 'Parameters for deploying Aurora RDS, LinOTP and FreeRADIUS Configuration'
-    Order: '2'
+    Order: '3'
   cfn-lint:
     config:
       ignore_checks:
@@ -19,28 +19,15 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Microsoft Active Directory Domain Services Configuration
-        Parameters:
-          - DomainUser
-      - Label:
           default: VPC Configuration.
         Parameters:
           - VPCID
     ParameterLabels:
-      DomainUser:
-        default: Normal Domain user that will be used to configure LinOTP LDAP connection
       PrivateSubnet1ID:
         default: Private Subnet 1 ID
       PrivateSubnet2ID:
         default: Private Subnet 2 ID
 Parameters:
-  DomainUser:
-    AllowedPattern: '[a-zA-Z0-9]*'
-    Default: JaneDoe
-    Description: Username for the AD account that WorkSpace will be launched for
-    MaxLength: '25'
-    MinLength: '5'
-    Type: String
   LinOTPDBName:
     Type: String
     Default: LINOTP
@@ -633,7 +620,7 @@ Resources:
                   - |
                     REGION=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
                     # Create Self Signed certificate and Import to ACM 
-                    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout albserver.key -out albserver.crt -subj "/C=US/ST=WA/L=Seattle/O=WorkSpaces/OU=End User Computing/CN=*.$REGION.elb.amazonaws.com"
+                    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout albserver.key -out albserver.crt -subj "/C=US/ST=WA/L=Seattle/O=WorkSpaces/OU=End User Computing/CN=*.$REGION.elb.amazonaws.com"
                     
                     # aws acm import-certificate --certificate file://albserver.crt --private-key file://albserver.key --region $REGION
                     ALBCertArn=$(aws acm import-certificate --certificate file://albserver.crt --private-key file://albserver.key --region $REGION | jq -r .CertificateArn)
@@ -806,6 +793,7 @@ Resources:
       DBClusterIdentifier: !Join ["-", [ "RadiusDB", !Ref "AWS::Region" ]]
       DeletionProtection: false
       EnableHttpEndpoint: true
+      StorageEncrypted: true
       ScalingConfiguration:
         AutoPause: true
         MinCapacity: 1
