@@ -1,9 +1,9 @@
 :quickstart-project-name: quickstart-freeradius-mfa-workspaces
 :quickstart-github-org: aws-quickstart
-// :partner-product-name: Full Product Name
+:partner-product-name: FreeRADIUS MFA with Amaon WorkSpaces
 :partner-product-short-name: FreeRADIUS MFA with Amazon WorkSpaces
 // :partner-company-name: Example Company Name, Ltd.
-:doc-month: August
+:doc-month: November
 :doc-year: 2022
 //:partner-contributors: John Smith, {partner-company-name}
 // :other-contributors: Akua Mansa, Trek10

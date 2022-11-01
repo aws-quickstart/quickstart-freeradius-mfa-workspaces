@@ -19,7 +19,7 @@ The following sections discuss the Quick Start architecture for each scenario.
 === Scenario 1: Deploy WorkSpaces, MFA solution and self-managed AD
 [#architecture1]
 .Scenario 1 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
-image::../images/Architecture1-SC1.png[Architecture1]
+image::../docs/deployment_guide/images/Architecture1-SC1.png[Architecture1]
 
 // image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
 
@@ -65,7 +65,7 @@ Scenario 2 is similar to scenario 1, except that it includes AWS Managed Microso
 AWS Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information about AWS Directory Service, see https://aws.amazon.com/directoryservice/[product details, role=external,window=_blank] and the http://aws.amazon.com/documentation/directory-service/[AWS documentation, role=external,window=_blank].
 [#architecture2]
 .Scenario 2 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
-image::../images/Architecture2-SC2.png[Architecture2]
+image::../docs/deployment_guide/images/Architecture2-SC2.png[Architecture2]
 
 // image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
 
