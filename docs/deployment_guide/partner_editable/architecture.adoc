@@ -87,6 +87,7 @@ internet access for resources in the private subnets.*
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
 ** (Required) A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
 * AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, RADIUS Server and enable MFA on Directory Service.
+* AWS Lambda function that triggers Systems Manager Automation Document.
 * AWS Secrets Manager to store passwords.
 * AWS Directory Service to provision and manage AD DS in the private subnets.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
@@ -115,13 +116,20 @@ image::../images/Architecture3-SC3.png[Architecture3]
 
 As shown in <<architecture3>>, the AWS CloudFormation templates that automate this deployment set up the following:
 
+* A highly available architecture that spans two Availability Zones.*
+* A virtual private cloud (VPC) configured with public and private subnets, according to AWS
+best practices, to provide you with your own virtual network on AWS.*
+* In the public subnets:
+** Managed network address translation (NAT) gateways to allow outbound
+internet access for resources in the private subnets.*
 ** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
-** (Required) A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
+** (Required) An existing AWS Directory Service in supported Amazon WorkSpaces AWS region.
 * AWS Systems Manager Automation documents to register AWS DS for Amazon WorkSpaces, RADIUS Server and enable MFA on Directory Service.
+* AWS Lambda function that triggers Systems Manager Automation Document.
 * AWS Secrets Manager to store passwords.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
-* Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
+* Amazon KMS that encrypts the Amazon WorkSpace root and user and RADIUS server EBS volumes. 
 * Amazon SNS to notify users when deployment of WorkSpace is complete. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.

@@ -1,3 +1,5 @@
 // Include any postdeployment steps here, such as steps necessary to test that the deployment was successful. If there are no postdeployment steps, leave this file empty.
 
 == Postdeployment steps
+
+* Once deployment is complete, you need to download the samplepolicy.cfg file, upload to the admin portal. The link to this portal will be in the output of the RADIUS stack in Cloudformation. For more information on how to upload this policy document, refer to step 2.10 in this https://aws.amazon.com/blogs/desktop-and-application-streaming/integrating-freeradius-mfa-with-amazon-workspaces/[Blog post, role=external,window=_blank]. 
