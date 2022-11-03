@@ -8,7 +8,7 @@ Deploying this Quick Start with default parameters builds the following Amazon W
 
 * *Scenario 2: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution and AWS Managed Microsoft AD.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. AWS Directory Service takes care of AD DS tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. It also deploys an Amazon WorkSpace and a FreeRADIUS solution that is integrated with AD DS, configured and enabled on the AWS Managed Microsoft AD. You can also choose to deploy the Quick Start into your existing VPC infrastructure. Manual steps are required for users to register MFA token after deployment. 
 
-* *Scenario 3: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution in an existing AWS Directory Service.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure for Amazon WorkSpaces and FreeRADIUS solution. It integrates the FreeRADIUS solution into an existing AD DS and AWS Directory Service. You will be required to provide credentials of an existing Domain user with permissions to make LDAP request, also requires an existing VPC. This scenario requires you have AWS Directory Service already created. 
+* *Scenario 3: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution in an existing AWS Directory Service.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure for Amazon WorkSpaces and FreeRADIUS solution. It integrates the FreeRADIUS solution into an existing AD DS and AWS Directory Service. You will be required to provide credentials of an existing Domain user with permissions to make LDAP request, also requires an existing AWS Directory Service ID and VPC. This scenario requires you have AWS Directory Service already created. 
 
 For all new AD DS installations, the Quick Start also deploys AD DS and AD-integrated DNS, and it sets up Active Directory sites and subnets. For all the above scenarios, MFA is enabled on the Directory Service with FreeRADIUS solution and an Amazon WorkSpace is launched for a domain user. 
 
@@ -82,10 +82,12 @@ internet access for resources in the private subnets.*
 * In the private subnets:
 ** A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
-** A Windows Server forest and domain functional level, including security groups and rules for traffic between instances.
-** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
-** An Amazon WorkSpaces for a specified Domain User. These users are created in Scenarios 1 and 2.
-** AWS Managed Microsoft AD Directory Service to provision and manage AD DS in the private subnets.
+** (Required) A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
+* AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, RADIUS Server and enable MFA on Directory Service.
+* AWS Lambda function triggers Systems Manager Automation Document.
+* AWS Secrets Manager to store credentials.
+* AWS Directory Service to provision and manage AD DS in the private subnets.
+* Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
 * Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
 * AWS Secrets Manager to store passwords.
 * AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, RADIUS Server and enable MFA on Directory Service.
@@ -103,7 +105,7 @@ To deploy this stack, follow the step-by-step instructions in the Deployment Ste
 
 
 === Scenario 3: Deploy Amazon WorkSpaces, MFA solution into an existing AWS Directory Service
-Scenario 3 is similar to the 1 and 2 above, except that it does not provision the Active Directory portion. It will require an existing AWS Directory Service and a Domain user with permissions to make LDAP request to your AD. 
+Scenario 3 is similar to scenarios 1 and 2 above, except that it does not provision the Active Directory part. It requires an existing AWS Directory Service and a Domain user with permissions to make LDAP request to your existing AD. 
 
 [#architecture2]
 .Scenario 3 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
@@ -124,11 +126,12 @@ internet access for resources in the private subnets.*
 * In the private subnets:
 ** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
-** A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
+** (Required) An existing AWS Directory Service in supported Amazon WorkSpaces AWS region.
 * AWS Systems Manager Automation documents to register AWS DS for Amazon WorkSpaces, RADIUS Server and enable MFA on Directory Service.
+* AWS Lambda function triggers Systems Manager Automation Document.
 * AWS Secrets Manager to store passwords.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
-* Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
+* Amazon KMS to encrypt the Amazon WorkSpace root and user and RADIUS server EBS volumes. 
 * Amazon SNS to notify users when deployment of WorkSpace is complete. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
