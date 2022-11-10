@@ -1,24 +1,24 @@
 :xrefstyle: short
 
-This Quick Start provides separate AWS CloudFormation templates to support three deployment scenarios. For each scenario, you also have the option to create a new virtual private cloud (VPC) or use your existing VPC infrastructure. Choose the scenario that best fits your needs.
+This guide provides separate AWS CloudFormation templates to support three deployment scenarios. For each scenario, you also have the option to create a new virtual private cloud (VPC) or use your existing VPC infrastructure. Choose the scenario that best fits your needs.
 
-Deploying this Quick Start with default parameters builds the following Amazon WorkSpaces with FreeRADIUS MFA solution environment in the AWS Cloud.
+Deploying with default parameters builds the following Amazon WorkSpaces with FreeRADIUS MFA solution environment in the AWS Cloud.
 
-* *Scenario 1: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution and your own AD DS installation on Amazon EC2 instances.* The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure, sets up and configures AD DS and AD-integrated DNS on the AWS Cloud. It also creates AWS Directory Service (AD Connector) but maintenance and adminstration of AD DS tasks are handled by you. It then deploys Amazon WorkSpaces and FreeRADIUS solution that is integrated with AD DS, configured and enabled on the AD Connector. You can also choose to deploy the Quick Start into your existing VPC infrastructure. Manual steps are required for users to register MFA token after deployment. 
+* *Scenario 1: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution and your own AD DS installation on Amazon EC2 instances.* The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure, sets up and configures AD DS and AD-integrated DNS on the AWS Cloud. It also creates AWS Directory Service (AD Connector) but maintenance and adminstration of AD DS tasks are handled by you. It then deploys Amazon WorkSpaces and FreeRADIUS solution that is integrated with AD DS, configured and enabled on the AD Connector. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register MFA token after deployment. 
 
-* *Scenario 2: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution and and AWS Managed Microsoft AD.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. AWS Directory Service takes care of AD DS tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. It also deploys an Amazon WorkSpace and a FreeRADIUS solution that is integrated with AD DS, configured and enabled on the AWS Managed Microsoft AD. You can also choose to deploy the Quick Start into your existing VPC infrastructure. Manual steps are required for users to register MFA token after deployment. 
+* *Scenario 2: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution and and AWS Managed Microsoft AD.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. AWS Directory Service takes care of AD DS tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. It also deploys an Amazon WorkSpace and a FreeRADIUS solution that is integrated with AD DS, configured and enabled on the AWS Managed Microsoft AD. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register MFA token after deployment. 
 
 * *Scenario 3: Deploy and Configure Amazon WorkSpaces with FreeRADIUS MFA solution in an existing AWS Directory Service.* The AWS CloudFormation template for this scenario builds the base AWS Cloud infrastructure for Amazon WorkSpaces and FreeRADIUS solution. It integrates the FreeRADIUS solution into an existing AD DS and AWS Directory Service. You will be required to provide credentials of an existing Domain user with permissions to make LDAP request, also requires an existing AWS Directory Service ID and VPC. This scenario requires you have AWS Directory Service already created. 
 
-For all new AD DS installations, the Quick Start also deploys AD DS and AD-integrated DNS, and it sets up Active Directory sites and subnets. For all the above scenarios, MFA is enabled on the Directory Service with FreeRADIUS solution and an Amazon WorkSpace is launched for a domain user. 
+For all new AD DS installations, it deploys AD DS and AD-integrated DNS, and it sets up Active Directory sites and subnets. For all the above scenarios, MFA is enabled on the Directory Service with FreeRADIUS solution and an Amazon WorkSpace is launched for a domain user. 
 
-The following sections discuss the Quick Start architecture for each scenario.
+The following sections discuss the architecture for each scenario.
 
 // Replace this example diagram with your own. Follow our wiki guidelines: https://w.amazon.com/bin/view/AWS_Quick_Starts/Process_for_PSAs/#HPrepareyourarchitecturediagram. Upload your source PowerPoint file to the GitHub {deployment name}/docs/images/ directory in its repository.
 
 === Scenario 1: Deploy Amazon WorkSpaces, MFA solution and self-managed Active Directory
 [#architecture1]
-.Scenario 1 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
+.Scenario 1 - Architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
 image::../images/Architecture1-SC1.png[Architecture1]
 
 // image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
@@ -37,6 +37,7 @@ internet access for resources in the private subnets.*
 * In the private subnets:
 ** A Windows Server forest and domain functional level, including security groups and rules for traffic between instances.
 ** An Amazon WorkSpaces for a specified Domain User. These users are created in Scenarios 1 and 2.
+** AWS Directory Service (AD Connector) configured with the AD DS DNS IP addresses.
 ** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
 * AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, AD Connector, RADIUS Server and enable MFA on Directory Service.
@@ -44,11 +45,10 @@ internet access for resources in the private subnets.*
 * AWS Secrets Manager to store passwords.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
 * Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
-* Amazon SNS to notify users when deployment of WorkSpace is complete. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
-[.small]#* The template that deploys this Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
+[.small]#* The template that deploys this into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
 In this architecture, domain controllers are deployed into two private VPC subnets in separate Availability Zones, making AD DS highly available. NAT gateways are deployed to public subnets, providing outbound internet access for instances in private subnets. Remote Desktop Gateways are deployed in an Auto Scaling group to the public subnets to help secure remote access to instances in private subnets. You can deploy an optional certificate authority in Availability Zone 1.
 
@@ -64,7 +64,7 @@ Scenario 2 is similar to scenario 1, except that it includes AWS Managed Microso
 
 AWS Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information about AWS Directory Service, see https://aws.amazon.com/directoryservice/[product details, role=external,window=_blank] and the http://aws.amazon.com/documentation/directory-service/[AWS documentation, role=external,window=_blank].
 [#architecture2]
-.Scenario 2 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
+.Scenario 2 - Architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
 image::../images/Architecture2-SC2.png[Architecture2]
 
 // image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
@@ -92,11 +92,10 @@ internet access for resources in the private subnets.*
 * AWS Directory Service to provision and manage AD DS in the private subnets.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
 * Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
-* Amazon SNS to notify users when deployment of WorkSpace is complete. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
-[.small]#* The template that deploys this Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
+[.small]#* The template that deploys this into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
 Once the AWS Microsoft Managed AD Directory Service creation is complete, the WorkSpace Cloudformation nested stack kicks-off AWS Systems Manager Automation document that registers the Directory Service for Amazon WorkSpaces. The last nested stack deploys the RADIUS solution behind an AutoScaling group and Elastic Load Balancer. The AutoScaling activity triggers an SSM Automation Document via Amazon EventBridge. This SSM Automation document fetches AD credentials stored in SSM Parameter Store and Secrets Manager to configure Amazon Aurora for LinOTP, integrates LinOTP with Active Directory, creates self-signed certifcate that is imported to AWS Certificate Manager, creates HTTPS Application Load Balancer listener and updates the registered AWS Directory service for MFA. 
 
@@ -107,7 +106,7 @@ To deploy this stack, follow the step-by-step instructions in the Deployment Ste
 Scenario 3 is similar to scenarios 1 and 2 above, except that it does not provision the Active Directory part. It requires an existing AWS Directory Service and a Domain user with permissions to make LDAP request to your existing AD. 
 
 [#architecture2]
-.Scenario 3 - Quick Start architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
+.Scenario 3 - Architecture for Amazon WorkSpaces with FreeRADIUS MFA solution on AWS
 image::../images/Architecture3-SC3.png[Architecture3]
 
 // image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
@@ -131,11 +130,10 @@ internet access for resources in the private subnets.*
 * AWS Secrets Manager to store passwords.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
 * Amazon KMS to encrypt the Amazon WorkSpace root and user and RADIUS server EBS volumes. 
-* Amazon SNS to notify users when deployment of WorkSpace is complete. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
-[.small]#* The template that deploys this Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
+[.small]#* The template that deploys this into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
 The WorkSpace Cloudformation nested stack kicks-off AWS Systems Manager Automation document that registers the Directory Service for Amazon WorkSpaces. The last nested stack deploys the RADIUS solution behind an AutoScaling group and Elastic Load Balancer. The AutoScaling activity triggers an SSM Automation Document via Amazon EventBridge. This SSM Automation document fetches AD credentials stored in SSM Parameter Store and Secrets Manager to configure Amazon Aurora for LinOTP, integrates LinOTP with Active Directory, creates self-signed certifcate that is imported to AWS Certificate Manager, creates HTTPS Application Load Balancer listener and updates the registered AWS Directory service for MFA. 
 
