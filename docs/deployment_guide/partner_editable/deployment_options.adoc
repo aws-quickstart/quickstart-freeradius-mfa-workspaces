@@ -1,6 +1,6 @@
 // Edit this placeholder text as necessary to describe the deployment options.
 
-This Quick Start provides the following deployment options:
+This solution provides the following deployment options:
 
 * http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new Self-Managed AD and VPC^]. This option builds a new AWS environment that consists of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys self-managed Active Directory, Amazon WorkSpaces and FreeRADIUS Server into this new VPC. The self-managed Active Directory is deployed on EC2 instances in different availability zones. This AD domain is used to create a AD Connector Directory Service, which is registered for Amazon WorkSpaces. Finally, a FreeRADIUS solutoin is deployed and MFA is enabled on this AWS Directory Service. 
 * http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new AWS Managed AD and VPC^]. This option builds a new AWS environment that consists of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys a new AWS Managed AD Directory Service, Amazon WorkSpaces and FreeRADIUS Server into this new VPC. The created AWS Directory Service is registered for Amazon WorkSpaces. Finally, a FreeRADIUS solution is deployed and MFA is enabled on this AWS Directory Service. 
@@ -8,4 +8,4 @@ This Quick Start provides the following deployment options:
 * http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new Self-Managed AD and existing VPC^]. This option provisions self-managed Active Directory, Amazon WorkSpaces and FreeRADIUS Server in your existing AWS infrastructure.
 * http://qs_launch_permalink[Deploy Amazon WorkSpaces with FreeRADIUS MFA into a new AWS Managed AD and existing VPC^]. This option provisions new AWS Managed AD Directory Service, Amazon WorkSpaces and FreeRADIUS Server in your existing AWS infrastructure.
 
-This Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and FreeRADIUS MFA settings.
+This solution provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and FreeRADIUS MFA settings.
