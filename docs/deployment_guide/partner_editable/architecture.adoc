@@ -35,14 +35,14 @@ best practices, to provide you with your own virtual network on AWS.*
 internet access for resources in the private subnets.*
 ** Remote Desktop Gateway (RD Gateway) instances in an Auto Scaling group to help secure remote access to instances in private subnets.*
 * In the private subnets:
-** A Windows Server forest and domain functional level, including security groups and rules for traffic between instances.
+** A Windows Server forest and domain functional level controller, including security groups and rules for traffic between instances.
 ** An Amazon WorkSpaces for a specified Domain User. These users are created in Scenarios 1 and 2.
 ** AWS Directory Service (AD Connector) configured with the AD DS DNS IP addresses.
 ** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
-* AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, AD Connector, RADIUS Server and enable MFA on Directory Service.
-* AWS Lambda function that creates an AD Connector Directory Service from AD DS.
+* Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
 * AWS Secrets Manager to store passwords.
+* AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, AD Connector, RADIUS Server and enable MFA on Directory Service.
 * Amazon EventBridge to trigger AWS Systems Manager Automation document that configures LinOTP AD integration and RADIUS solution when AutoScaling activity of the RADIUS server occurs. 
 * Amazon KMS that encrypts the Amazon WorkSpace root and user volumes and RADIUS server EBS volumes. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
@@ -81,9 +81,7 @@ best practices, to provide you with your own virtual network on AWS.*
 internet access for resources in the private subnets.*
 ** Remote Desktop Gateway (RD Gateway) instances in an Auto Scaling group to help secure remote access to instances in private subnets.*
 * In the private subnets:
-** A Windows Server forest and domain functional level, including security groups and rules for traffic between instances.
-** An Amazon WorkSpaces for a specified Domain User. These users are created in Scenarios 1 and 2.
-** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in private subnets.
+** A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
 ** (Required) A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
 * AWS Systems Manager Automation documents to set up and configure AD DS, AD-integrated DNS, RADIUS Server and enable MFA on Directory Service.
