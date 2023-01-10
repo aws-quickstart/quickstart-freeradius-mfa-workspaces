@@ -2,4 +2,4 @@
 
 == Postdeployment steps
 
-Once deployment is complete, you will need to download the samplepolicy.cfg file and upload to the admin portal. The link to this portal will be in the output of the RADIUS stack in CloudFormation. For more information on how to upload this policy document, refer to step 2.10 in this https://aws.amazon.com/blogs/desktop-and-application-streaming/integrating-freeradius-mfa-with-amazon-workspaces/[Blog post, role=external,window=_blank]. 
+Once deployment is complete, you'll need to download the `samplepolicy.cfg` file and upload to the admin portal. The link to this portal will be in the output of the RADIUS stack in AWS CloudFormation. For more information, refer to step 2.10 in the https://aws.amazon.com/blogs/desktop-and-application-streaming/integrating-freeradius-mfa-with-amazon-workspaces/[Integrating FreeRADIUS MFA with Amazon WorkSpaces blog post^]. 
