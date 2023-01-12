@@ -13,11 +13,9 @@ For all new AD DS installations, it deploys AD DS and AD-integrated DNS, and it 
 // Replace this example diagram with your own. Follow our wiki guidelines: https://w.amazon.com/bin/view/AWS_Quick_Starts/Process_for_PSAs/#HPrepareyourarchitecturediagram. Upload your source PowerPoint file to the GitHub {deployment name}/docs/images/ directory in its repository.
 
 === Scenario 1: Deploy {partner-product-name} and self-managed AD
-<<#architecture1>>
+[#architecture1]
 .Scenario 1 - Solution architecture for {partner-product-name} on AWS
-image::../images/Architecture1-SC1.png[Architecture1]
-
-// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
+image::../docs/deployment_guide/images/Architecture1-SC1.png[Architecture]
 
 As shown in <<architecture1>>, this solution sets up the following:
 
