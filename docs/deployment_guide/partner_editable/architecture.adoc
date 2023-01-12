@@ -15,7 +15,7 @@ For all new AD DS installations, it deploys AD DS and AD-integrated DNS, and it 
 === Scenario 1: Deploy {partner-product-name} and self-managed AD
 [#architecture1]
 .Scenario 1 - Solution architecture for {partner-product-name} on AWS
-image::../docs/deployment_guide/images/Architecture1-SC1.png[Architecture]
+image::../docs/deployment_guide/images/Architecture1-SC1.png[Architecture1]
 
 As shown in <<architecture1>>, this solution sets up the following:
 
@@ -46,11 +46,11 @@ Scenario 2 is similar to scenario 1, except that it includes AWS Managed Microso
 
 Directory Service deploys AD DS across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information, see https://aws.amazon.com/directoryservice/[AWS Directory Service^] and http://aws.amazon.com/documentation/directory-service/[AWS Directory Service Documentation^].
 
-<<#architecture2>>
+[#architecture2]
 .Scenario 2 - Solution architecture for {partner-product-name} on AWS
-image::../images/Architecture2-SC2.png[Architecture2]
+image::../docs/deployment_guide/images/Architecture2-SC2.png[Architecture2]
 
-// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
+// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture2]
 
 As shown in <<architecture2>>, this solution sets up the following:
 
@@ -77,11 +77,11 @@ As shown in <<architecture2>>, this solution sets up the following:
 === Scenario 3: Deploy {partner-product-name} into an existing Directory Service
 Scenario 3 is similar to scenarios 1 and 2 above, except that it does not provision the AD. It requires an existing Directory Service and a domain user with permissions to make an LDAP request to your existing AD. 
 
-<<#architecture2>>
+[#architecture3]
 .Scenario 3 - Solution architecture for {partner-product-name} on AWS
-image::../images/Architecture3-SC3.png[Architecture3]
+image::../docs/deployment_guide/images/Architecture3-SC3.png[Architecture3]
 
-// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture]
+// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture3]
 
 As shown in <<architecture3>>, this solution sets up the following:
 
