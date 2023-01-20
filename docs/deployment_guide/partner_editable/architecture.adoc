@@ -15,7 +15,7 @@ For all new AD DS installations, it deploys AD DS and AD-integrated DNS, and it 
 === Scenario 1: Deploy {partner-product-name} and self-managed AD
 [#architecture1]
 .Scenario 1 - Solution architecture for {partner-product-name} on AWS
-image::../docs/deployment_guide/images/Architecture1-SC1.png[Architecture1]
+image::../docs/deployment_guide/images/freeradius-mfa-workspaces-architecture-diagram-S1.png[Architecture1]
 
 As shown in <<architecture1>>, this solution sets up the following:
 
@@ -30,12 +30,11 @@ As shown in <<architecture1>>, this solution sets up the following:
 ** Directory Service (AD Connector) configured with the AD DS DNS IP addresses.
 ** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon EC2 instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
-* AWS Key Management Service (AWS KMS) that encrypts the WorkSpace root and user volumes and RADIUS server EBS volumes. 
+* AWS Key Management Service (AWS KMS) to encrypt the WorkSpace root and user volumes and RADIUS server EBS volumes. 
 * AWS Secrets Manager to store passwords.
 * AWS Systems Manager automation documents to set up and configure AD DS, AD-integrated DNS, AD Connector, and RADIUS Server and enable MFA on Directory Service.
 * AWS Lambda function triggers Systems Manager Automation Document.
 * Amazon EventBridge to trigger Systems Manager automation document that configures LinOTP AD integration and RADIUS solution when auto scaling activity of the RADIUS server occurs. 
-* AWS KMS to encrypt the WorkSpace root and user volumes and RADIUS server EBS volumes. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
@@ -48,27 +47,16 @@ Directory Service deploys AD DS across multiple Availability Zones, and automati
 
 [#architecture2]
 .Scenario 2 - Solution architecture for {partner-product-name} on AWS
-image::../docs/deployment_guide/images/Architecture2-SC2.png[Architecture2]
-
-// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture2]
+image::../docs/deployment_guide/images/freeradius-mfa-workspaces-architecture-diagram-S2.png[Architecture2]
 
 As shown in <<architecture2>>, this solution sets up the following:
 
-* A highly available architecture that spans two Availability Zones.*
-* A VPC configured with public and private subnets, according to AWS best practices, to provide you with your own virtual network on AWS.*
-* In the public subnets:
-** Managed NAT gateways to allow outbound internet access for resources in the private subnets.*
-** RD Gateway instances in an Auto Scaling group to help secure remote access to instances in private subnets.*
+* Bullets 1–3 from *Scenario 1*.
 * In the private subnets:
 ** (Required) A Windows EC2 instance to act as a management instance, including security groups and rules for traffic between instances.
-** A WorkSpaces for a specified domain user. These users are created in Scenarios 1 and 2.
-** Aurora used as LinOTP database backend for the MFA solution. 
-* Systems Manager automation documents to set up and configure AD DS, AD-integrated DNS, RADIUS Server and enable MFA on Directory Service.
-* Lambda function triggers Systems Manager automation document.
-* Secrets Manager to store credentials.
+** Bullets 4.2 and 4.5 from *Scenario 1*. 
+* Bullets 1–5 from *Scenario 1*.
 * Directory Service to provision and manage AD DS in the private subnets.
-* EventBridge to trigger Systems Manager automation document that configures LinOTP AD integration and RADIUS solution when auto scaling activity of the RADIUS server occurs. 
-* AWS KMS to encrypt the WorkSpace root and user volumes and RADIUS server EBS volumes. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
@@ -79,25 +67,18 @@ Scenario 3 is similar to scenarios 1 and 2 above, except that it does not provis
 
 [#architecture3]
 .Scenario 3 - Solution architecture for {partner-product-name} on AWS
-image::../docs/deployment_guide/images/Architecture3-SC3.png[Architecture3]
-
-// image::../docs/deployment_guide/images/MFA-EnabledWorkSpaceSelf-ManagedAD.png[Architecture3]
+image::../docs/deployment_guide/images/freeradius-mfa-workspaces-architecture-diagram-S3.png[Architecture3]
 
 As shown in <<architecture3>>, this solution sets up the following:
 
-* A highly available architecture that spans two Availability Zones.*
-* A VPC configured with public and private subnets, according to AWS best practices, to provide you with your own virtual network on AWS.*
+* Bullets 1–2 from *Scenario 2*.
 * In the public subnets:
 ** Managed NAT gateways to allow outbound internet access for resources in the private subnets.*
 * In the private subnets:
-** A Linux RADIUS server in an Auto Scaling group to allow inbound SSH access to Amazon EC2 instances in private subnets.
-** Aurora used as LinOTP database backend for the MFA solution. 
+** Bullets 4.4 and 4.5 from *Scenario 1*. 
 ** (Required) An existing Directory Service in a supported WorkSpaces AWS region.
 * Systems Manager automation documents to register Directory Service for WorkSpaces and RADIUS server and enable MFA on Directory Service.
-* Lambda function triggers Systems Manager automation document.
-* Secrets Manager to store passwords.
-* EventBridge to trigger Systems Manager automation document that configures LinOTP AD integration and RADIUS solution when auto scaling activity of the RADIUS server occurs. 
-* AWS KMS to encrypt the Amazon WorkSpace root and user and RADIUS server EBS volumes. 
+* Bullets 5–6 and 8–9 from *Scenario 1*. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
