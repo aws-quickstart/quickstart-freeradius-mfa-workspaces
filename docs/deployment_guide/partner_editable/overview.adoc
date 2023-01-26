@@ -1,4 +1,4 @@
-This guide deploys {partner-product-name} solution on the AWS Cloud. This guide covers the steps necessary to deploy this solution.
+This guide covers information you need to deploy {partner-product-name} solution on the AWS Cloud. 
 
 For additional information about the product, refer to https://freeradius.org/[FreeRADIUS^].
 
