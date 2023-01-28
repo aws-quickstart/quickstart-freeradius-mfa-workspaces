@@ -30,14 +30,14 @@ As shown in <<architecture1>>, this solution sets up the following:
 * In the private subnets:
 ** A Windows Server forest and domain functional level controller, including a security group and rules for traffic between instances.
 ** A WorkSpaces for a specified domain user. These users are created in Scenarios 1 and 2.
-** Directory Service (AD Connector) configured with the Active Directory Domain Services (AD DS) DNS IP addresses.
-** A Linux RADIUS server in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon EC2 instances in private subnets.
+** Directory Service (AD Connector) configured with the Active Directory Domain Services (AD DS) DNS IP addresses that connects to WorkSpaces.
+** A Linux RADIUS server behind Application Load Balancer in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon EC2 instances in private subnets.
 ** Amazon Aurora used as LinOTP database backend for the MFA solution. 
 * AWS Key Management Service (AWS KMS) to encrypt the WorkSpaces root and user volumes and RADIUS server EBS volumes. 
 * AWS Secrets Manager to store passwords.
 * AWS Systems Manager for automation documents to do the following:
 ** Install and configure Active Directory Domain Services (AD DS), AD-integrated DNS, AD Connector, and RADIUS Server
-**Enable MFA on Directory Service.
+** Enable MFA on Directory Service.
 * Amazon EventBridge to invoke Systems Manager for automation documents that configures LinOTP AD integration and RADIUS solution when auto scaling activity of the RADIUS server occurs.
 * AWS Lambda function triggers Systems Manager for automation documents. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
