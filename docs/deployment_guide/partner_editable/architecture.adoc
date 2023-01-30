@@ -36,7 +36,7 @@ As shown in <<architecture1>>, this solution sets up the following:
 * AWS Key Management Service (AWS KMS) to encrypt the WorkSpaces root and user volumes and RADIUS server volumes. 
 * AWS Secrets Manager to store passwords.
 * AWS Systems Manager for automation documents to do the following:
-** Install and configure Active Directory Domain Services (AD DS) (not shown), AD-integrated DNS (not shown), AD Connector, and RADIUS server.
+** Install and configure Active Directory Domain Services (AD DS) (not shown), Active Directory DNS integration (not shown), AD Connector, and RADIUS server.
 ** Enable MFA on Directory Service.
 * Amazon EventBridge to trigger Systems Manager for automation documents that configures integration when the RADIUS server auto scaling activity occurs.
 * AWS Lambda function triggers Systems Manager for automation documents. 
