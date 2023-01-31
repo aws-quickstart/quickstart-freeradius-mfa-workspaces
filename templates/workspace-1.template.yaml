@@ -2098,29 +2098,16 @@ Resources:
             - workspaces:ModifyWorkspaceAccessProperties
             - workspaces:ModifyWorkspaceCreationProperties
             - workspaces:RestoreWorkspace
-            - ds:Accept*
-            - ds:Add*
-            - ds:Authorize*
-            - ds:Cancel*
-            - ds:Check*
-            - ds:Connect*
-            - ds:Create*
-            - ds:Delete*
-            - ds:Update*
-            - ds:Disable*
-            - ds:Enable*
-            - ds:Get*
-            - ds:List*
-            - ds:Register*
-            - ds:Reject*
-            - ds:Remove*
-            - ds:Reset*
-            - ds:Restore*
-            - ds:Sahre*
-            - ds:Start*
-            - ds:Unauthorize*
-            - ds:Unshare*
-            - ds:Verify*
+            - ds:AuthorizeApplication
+            - ds:UnauthorizeApplication
+            - ds:ConnectDirectory
+            - ds:DeleteDirectory
+            - ds:UpdateRadius
+            - ds:UpdateSettings
+            - ds:DisableRadius
+            - ds:EnableRadius
+            - ds:RemoveIpRoutes
+            - ds:VerifyTrust
             Resource:
               - !Join ['',['arn:',!Ref AWS::Partition,':workspaces:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!GetAtt WSDirectoryId.Value]]
               - !Join ['',['arn:',!Ref AWS::Partition,':ds:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!GetAtt WSDirectoryId.Value]]
