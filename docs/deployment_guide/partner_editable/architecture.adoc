@@ -3,15 +3,15 @@
 Deploying this solution with default parameters builds the following {partner-product-name} environment in the AWS Cloud.
 
 * *Scenario 1: Deploy and Configure {partner-product-name} and your own Active Directory Domain Services (AD DS) installation on Amazon Elastic Compute Cloud (Amazon EC2) instances.* 
-The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure and sets up and configures Active Directory Domain Services (AD DS) and AD-integrated Domain Name Service (DNS) on the AWS Cloud. It also creates AWS Directory Service (AD Connector) but you handle maintenance and adminstration of Active Directory Domain Services (AD DS) tasks. It then deploys {partner-product-name} that is integrated with Active Directory Domain Services (AD DS) and configured and enabled on the AD Connector. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register the MFA token after deployment. 
+The AWS CloudFormation template for this scenario builds the AWS Cloud infrastructure and sets up and configures Active Directory Domain Services (AD DS) and AD-integrated Domain Name Service (DNS) on the AWS Cloud. It also creates AWS Directory Service for Microsoft Active Directory (AD Connector) but you handle maintenance and adminstration of Active Directory Domain Services (AD DS) tasks. It then deploys {partner-product-name} that is integrated with Active Directory Domain Services (AD DS) and configured and enabled on the AD Connector. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register the MFA token after deployment. 
 
 * *Scenario 2: Deploy and Configure {partner-product-name} and AWS Directory Service for Microsoft AD.* 
-The CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. Directory Service takes care of Active Directory Domain Services (AD DS) tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. It also deploys {partner-product-name} that is integrated with Active Directory Domain Services (AD DS) and configured and enabled on the AWS Managed Microsoft AD. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register the MFA token after deployment. 
+The CloudFormation template for this scenario builds the base AWS Cloud infrastructure and then deploys AWS Managed Microsoft AD on the AWS Cloud. AWS Directory Service takes care of Active Directory Domain Services (AD DS) tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots. It also deploys {partner-product-name} that is integrated with Active Directory Domain Services (AD DS) and configured and enabled on the AWS Managed Microsoft AD. You can also choose to deploy into your existing VPC infrastructure. Manual steps are required for users to register the MFA token after deployment. 
 
-* *Scenario 3: Deploy and Configure {partner-product-name} in an existing Directory Service.* 
-The CloudFormation template for this scenario builds the base AWS Cloud infrastructure for the {partner-product-name}. It integrates the solution into an existing Active Directory Domain Services (AD DS) and Directory Service. You'll be required to provide credentials of an existing domain user with permissions to make an LDAP request. It also requires an existing Directory Service ID and VPC. This scenario requires that you have Directory Service already created. 
+* *Scenario 3: Deploy and Configure {partner-product-name} in an existing AWS Directory Service.* 
+The CloudFormation template for this scenario builds the base AWS Cloud infrastructure for the {partner-product-name}. It integrates the solution into an existing Active Directory Domain Services (AD DS) and AWS Directory Service. You'll be required to provide credentials of an existing domain user with permissions to make an LDAP request. It also requires an existing AWS Directory Service ID and VPC. This scenario requires that you have AWS Directory Service already created. 
 
-For all new Active Directory Domain Services (AD DS) installations, it deploys Active Directory Domain Services (AD DS) and Active Directory DNS integration, and it sets up Active Directory sites and subnets. For all the above scenarios, MFA is enabled on the Directory Service with the solution and WorkSpaces is launched for a domain user. 
+For all new Active Directory Domain Services (AD DS) installations, it deploys Active Directory Domain Services (AD DS) and Active Directory DNS integration, and it sets up Active Directory sites and subnets. For all the above scenarios, MFA is enabled on the AWS Directory Service with the solution and WorkSpaces is launched for a domain user. 
 
 // Replace this example diagram with your own. Follow our wiki guidelines: https://w.amazon.com/bin/view/AWS_Quick_Starts/Process_for_PSAs/#HPrepareyourarchitecturediagram. Upload your source PowerPoint file to the GitHub {deployment name}/docs/images/ directory in its repository.
 
@@ -29,26 +29,27 @@ As shown in <<architecture1>>, this solution sets up the following:
 ** Remote Desktop Gateway (RD Gateway) instances in an Auto Scaling group to help secure remote access to instances in private subnets.*
 * In the private subnets:
 ** A Windows Server forest and domain functional level controller, including a security group and rules for traffic between instances.
-** A WorkSpaces for a specified domain user. These users are created in Scenarios 1 and 2.
-** Directory Service (AD Connector) configured with the Active Directory Domain Services (AD DS) DNS IP addresses that connects to WorkSpaces.
-** A Linux RADIUS server behind Application Load Balancer in an Auto Scaling group to allow inbound Secure Shell (SSH) access to Amazon EC2 instances in private subnets.
-** Amazon Aurora used as LinOTP database backend for the MFA solution. 
+** WorkSpaces for a specified domain user. These users are created in Scenarios 1 and 2.
+** AD Connector configured with the Active Directory Domain Services (AD DS) DNS IP addresses that connects to WorkSpaces.
+** An Application Load Balancer to allow inbound Secure Shell (SSH) access to Amazon EC2 instances in private subnets.
+** RADIUS servers installed to Amazon EC2 instances in an Auto Scaling group.
+** Amazon Aurora for a LinOTP database. 
 * AWS Key Management Service (AWS KMS) to encrypt the WorkSpaces root and user volumes and RADIUS server volumes. 
 * AWS Secrets Manager to store passwords.
 * AWS Systems Manager for automation documents to do the following:
 ** Install and configure Active Directory Domain Services (AD DS) (not shown), Active Directory DNS integration (not shown), AD Connector, and RADIUS server.
-** Enable MFA on Directory Service.
-* Amazon EventBridge to trigger Systems Manager for automation documents that configures integration when the RADIUS server auto scaling activity occurs.
-* AWS Lambda function triggers Systems Manager for automation documents. 
+** Enable MFA on AWS Directory Service.
+* Amazon EventBridge to invoke Systems Manager for automation documents that configures integration when the RADIUS server auto scaling activity occurs.
+* AWS Lambda function to invoke Systems Manager for automation documents. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
 
 [.small]#* The template that deploys this into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
 === Scenario 2: Deploy {partner-product-name} and AWS Managed Microsoft AD
-Scenario 2 is similar to scenario 1, but it includes AWS Managed Microsoft AD to provision and manage Active Directory Domain Services (AD DS) on the AWS Cloud. Instead of fully managing Active Directory Domain Services (AD DS) yourself, you rely on Directory Service for tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots.
+Scenario 2 is similar to scenario 1, but it includes AWS Managed Microsoft AD to provision and manage Active Directory Domain Services (AD DS) on the AWS Cloud. Instead of fully managing Active Directory Domain Services (AD DS) yourself, you rely on AWS Directory Service for tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots.
 
-Directory Service deploys Active Directory Domain Services (AD DS) across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information, see https://aws.amazon.com/directoryservice/[AWS Directory Service^] and http://aws.amazon.com/documentation/directory-service/[AWS Directory Service Documentation^].
+AWS Directory Service deploys Active Directory Domain Services (AD DS) across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information, see https://aws.amazon.com/directoryservice/[AWS Directory Service^] and http://aws.amazon.com/documentation/directory-service/[AWS Directory Service Documentation^].
 
 [#architecture2]
 .Scenario 2–Solution architecture for {partner-product-name} on AWS
@@ -67,8 +68,8 @@ As shown in <<architecture2>>, this solution sets up the following:
 
 [.small]#* The template that deploys this into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
 
-=== Scenario 3: Deploy {partner-product-name} into an existing Directory Service
-Scenario 3 is similar to scenarios 1 and 2 above, but it doesn't provision the Active Directory. It requires an existing Directory Service and a domain user with permissions to make an LDAP request to your existing Active Directory. 
+=== Scenario 3: Deploy {partner-product-name} into an existing AWS Directory Service
+Scenario 3 is similar to scenarios 1 and 2 above, but it doesn't provision the Active Directory. It requires an existing AWS Directory Service and a domain user with permissions to make an LDAP request to your existing Active Directory. 
 
 [#architecture3]
 .Scenario 3–Solution architecture for {partner-product-name} on AWS
@@ -82,7 +83,7 @@ As shown in <<architecture3>>, this solution sets up the following:
 * In the private subnets:
 ** Bullets 4.4 and 4.5 from *Scenario 1*. 
 ** (Required) An existing AWS Directory Service in a supported WorkSpaces AWS region.
-* Systems Manager for automation documents to register Directory Service for WorkSpaces and RADIUS server and enable MFA.
+* Systems Manager for automation documents to register AWS Directory Service for WorkSpaces and RADIUS server and enable MFA.
 * Bullets 5–6 and 8–9 from *Scenario 1*. 
 // Add bullet points for any additional components that are included in the deployment. Ensure that the additional components are shown in the architecture diagram. End each bullet with a period.
 // * <describe any additional components>.
