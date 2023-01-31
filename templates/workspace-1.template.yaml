@@ -2126,14 +2126,19 @@ Resources:
             - ec2:DescribeAvailabilityZones
             - sns:ListSubscriptions
             - sns:ListTopics
-            - sns:ListSubscriptionsByTopic
-            - sns:GetTopicAttributes
             - sns:GetSubscriptionAttributes
             - kms:ListKeys
             - kms:ListAliases
             # - organizations:Describe*
             # - organizations:List*
             Resource: '*'
+          - Effect: Allow
+            Action:
+            - sns:ListSubscriptionsByTopic
+            - sns:GetTopicAttributes
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*
+            
 Outputs:
   WorkspacesRegistrationCode:
     Description: Registration Code of launched WorkSpace
