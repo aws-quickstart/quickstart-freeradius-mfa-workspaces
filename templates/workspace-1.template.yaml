@@ -16,8 +16,12 @@ Metadata:
         - W9006
         - W9002
         - W9003
+        - W3037
+        - E2507
+        - W2511
       ignore_reason:
         - "Execution part SSM Automation"
+        - "IAM resources policy permissions"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
