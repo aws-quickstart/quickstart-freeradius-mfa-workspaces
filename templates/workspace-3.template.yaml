@@ -1027,155 +1027,46 @@ Resources:
             - workspaces:ModifyWorkspaceAccessProperties
             - workspaces:ModifyWorkspaceCreationProperties
             - workspaces:RestoreWorkspace
-            - ds:AcceptSharedDirectory
-            - ds:AddRegion
-            - ds:AddTagsToResource
-            - ds:AddIpRoutes
             - ds:AuthorizeApplication
-            - ds:CancelSchemaExtension
-            - ds:CheckAlias
+            - ds:UnauthorizeApplication
             - ds:ConnectDirectory
-            - ds:CreateConditionalForwarder
-            - ds:CreateIdentityPoolDirectory
-            - ds:CreateLogSubscription
-            - ds:CreateComputer
-            - ds:CreateMicrosoftAD
-            - ds:CreateTrust
-            - ds:CreateSnapshot
-            - ds:CreateDirectory
-            - ds:DeleteTrust
-            - ds:DeleteSnapshot
-            - ds:DeleteConditionalForwarder
-            - ds:DeleteLogSubscription
             - ds:DeleteDirectory
             - ds:UpdateRadius
-            - ds:UpdateConditionalForwarder
-            - ds:UpdateTrust
-            - ds:UpdateNumberOfDomainControllers
-            - ds:DisableClientAuthentication
-            - ds:DisableSso
-            - ds:DisableLDAPS
+            - ds:UpdateSettings
             - ds:DisableRadius
-            - ds:EnableClientAuthentication
-            - ds:EnableSso
             - ds:EnableRadius
-            - ds:EnableLDAPS
-            - ds:GetAuthorizedApplicationDetails
-            - ds:GetDirectoryLimits
-            - ds:GetSnapshotLimits
-            - ds:ListLogSubscriptions
-            - ds:ListCertificates
-            - ds:ListTagsForResource
-            - ds:ListSchemaExtensions
-            - ds:ListIpRoutes
-            - ds:ListAuthorizedApplications
-            - ds:RegisterEventTopic
-            - ds:RegisterCertificate
-            - ds:RejectSharedDirectory
-            - ds:RemoveRegion
-            - ds:RemoveTagsFromResource
             - ds:RemoveIpRoutes
-            - ds:ResetUserPassword
-            - ds:RestoreFromSnapshot
-            - ds:StartSchemaExtension
-            - ds:UnauthorizeApplication
-            - ds:UnshareDirectory
-            - ds:shareDirectory
             - ds:VerifyTrust
             Resource:
               - !Join ['',['arn:',!Ref AWS::Partition,':workspaces:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!Ref DirectoryID]]
               - !Join ['',['arn:',!Ref AWS::Partition,':ds:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!Ref DirectoryID]]
           - Effect: Allow
             Action:
-            - workspaces:DescribeAccountModifications
-            - workspaces:DescribeWorkspaceBundles
-            - workspaces:DescribeClientProperties
             - workspaces:DescribeWorkspaces
-            - workspaces:DescribeWorkspaceDirectories
-            - workspaces:DescribeConnectionAliasPermissions
-            - workspaces:DescribeWorkspaceSnapshots
-            - workspaces:DescribeAccount
-            - workspaces:DescribeWorkspaceImages
             - workspaces:DescribeTags
-            - workspaces:DescribeClientBranding
-            - workspaces:DescribeWorkspaceImagePermissions
-            - workspaces:DescribeIpGroups
-            - workspaces:DescribeWorkspacesConnectionStatus
-            - workspaces:DescribeConnectionAliases
-            - workspaces:DescribeConnectClientAddIns
-            - ds:DescribeRegions
-            - ds:DescribeLDAPSSettings
-            - ds:DescribeDomainControllers
-            - ds:DescribeSharedDirectories
-            - ds:DescribeSnapshots
-            - ds:DescribeTrusts
+            - workspaces:DescribeWorkspaceDirectories
             - ds:DescribeDirectories
-            - ds:DescribeClientAuthenticationSettings
-            - ds:DescribeCertificate
-            - ds:DescribeConditionalForwarders
-            - ds:DescribeEventTopics
-            - ec2:DescribeInstanceAttribute
+            - ec2:DescribeInternetGateways
             - ec2:DescribeSecurityGroups
-            - ec2:DescribeSecurityGroupReferences
-            - ec2:DescribeVolumeStatus
-            - ec2:DescribeVolumeStatus
-            - ec2:DescribeInstanceStatus
-            - ec2:DescribeNetworkInterfaces
-            - ec2:DescribeInstances
-            - ec2:DescribeVpcs
-            - ec2:DescribeVolumeAttribute
-            - ec2:DescribeKeyPairs
-            - ec2:DescribeIamInstanceProfileAssociations
-            - ec2:DescribeVolumes
-            - ec2:DescribeNetworkInterfaceAttribute
-            - ec2:DescribeAddresses
-            - ec2:DescribeNatGateways
-            - ec2:DescribeInstanceTypes
-            - ec2:DescribeImages
-            - ec2:DescribeSecurityGroupRules
-            - ec2:DescribeSubnets
-            - ec2:DescribeAvailabilityZones
-            - ec2:DescribeTags
             - ec2:DescribeRouteTables
+            - ec2:DescribeVpcs
+            - ec2:DescribeSubnets
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DescribeAvailabilityZones
             - sns:ListSubscriptions
-            - sns:ListPlatformApplications
-            - sns:ListSMSSandboxPhoneNumbers
             - sns:ListTopics
-            - sns:ListOriginationNumbers
-            - sns:ListEndpointsByPlatformApplication
-            - sns:ListSubscriptionsByTopica
-            - sns:ListTagsForResource
-            - sns:ListPhoneNumbersOptedOut
-            - sns:GetSMSAttributes
-            - sns:GetSMSSandboxAccountStatus
-            - sns:GetPlatformApplicationAttributes
             - sns:GetSubscriptionAttributes
-            - sns:GetTopicAttributes
-            - sns:GetEndpointAttributes
-            - organizations:DescribeOrganization
-            - organizations:DescribeAccount
-            - organizations:DescribeCreateAccountStatus
-            - organizations:DescribeOrganizationalUnit
-            - organizations:DescribeEffectivePolicy
-            - organizations:DescribeHandshake
-            - organizations:DescribePolicy
-            - organizations:ListOrganizationalUnitsForParent
-            - organizations:ListParents
-            - organizations:ListPoliciesForTarget
-            - organizations:ListTagsForResource
-            - organizations:ListRoots
-            - organizations:ListAccountsForParent
-            - organizations:ListChildren
-            - organizations:ListAccounts
-            - organizations:ListDelegatedAdministrators
-            - organizations:ListHandshakesForAccount
-            - organizations:ListTargetsForPolicy
-            - organizations:ListAWSServiceAccessForOrganization
-            - organizations:ListCreateAccountStatus
-            - organizations:ListPolicies
-            - organizations:ListDelegatedServicesForAccount
-            - organizations:ListHandshakesForOrganization
+            - kms:ListKeys
+            - kms:ListAliases
+            # - organizations:Describe*
+            # - organizations:List*
             Resource: '*'
+          - Effect: Allow
+            Action:
+            - sns:ListSubscriptionsByTopic
+            - sns:GetTopicAttributes
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*
 Outputs:
   WorkspacesRegistrationCode:
     Description: The Registration Code for the launched WorkSpace
