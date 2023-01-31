@@ -2113,15 +2113,26 @@ Resources:
               - !Join ['',['arn:',!Ref AWS::Partition,':ds:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!GetAtt WSDirectoryId.Value]]
           - Effect: Allow
             Action:
-            - workspaces:Describe*
-            - ds:Describe*
-            - ec2:Describe*
-            - sns:List*
-            - sns:Get*
+            - workspaces:DescribeWorkspaces
+            - workspaces:DescribeTags
+            - workspaces:DescribeWorkspaceDirectories
+            - ds:DescribeDirectories
+            - ec2:DescribeInternetGateways
+            - ec2:DescribeSecurityGroups
+            - ec2:DescribeRouteTables
+            - ec2:DescribeVpcs
+            - ec2:DescribeSubnets
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DescribeAvailabilityZones
+            - sns:ListSubscriptions
+            - sns:ListTopics
+            - sns:ListSubscriptionsByTopic
+            - sns:GetTopicAttributes
+            - sns:GetSubscriptionAttributes
             - kms:ListKeys
             - kms:ListAliases
-            - organizations:Describe*
-            - organizations:List*
+            # - organizations:Describe*
+            # - organizations:List*
             Resource: '*'
 Outputs:
   WorkspacesRegistrationCode:
