@@ -2020,7 +2020,7 @@ Resources:
       cfn-lint:
         config:
           ignore_checks:
-            - W3037
+            - W3037*
             - E2507
             - W2511
     Properties:
