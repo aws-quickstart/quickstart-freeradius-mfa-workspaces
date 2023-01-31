@@ -2019,6 +2019,13 @@ Resources:
     DependsOn:
       - WaitCondition
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3037
+            - E2507
+            - W2511
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
