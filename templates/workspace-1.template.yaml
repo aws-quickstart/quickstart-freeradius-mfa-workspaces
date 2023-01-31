@@ -133,13 +133,6 @@ Parameters:
     MaxLength: '255'
     MinLength: '2'
     Type: String
-  DomainNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DEMO
-    Description: NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. DEMO
-    MaxLength: '15'
-    MinLength: '1'
-    Type: String
   DomainUser:
     AllowedPattern: '[a-zA-Z0-9]*'
     Default: JaneDoe
