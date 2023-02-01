@@ -3,7 +3,7 @@
 :partner-product-name: FreeRADIUS MFA with Amazon WorkSpaces
 :partner-product-short-name: FreeRADIUS MFA with Amazon WorkSpaces
 // :partner-company-name: Example Company Name, Ltd.
-:doc-month: January
+:doc-month: February
 :doc-year: 2023
 //:partner-contributors: John Smith, {partner-company-name}
 // :other-contributors: Akua Mansa, Trek10
