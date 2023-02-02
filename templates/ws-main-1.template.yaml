@@ -931,7 +931,6 @@ Resources:
         ADServer2PrivateIP: !Ref 'ADServer2PrivateIP'
         BundleId: !Ref 'BundleId'
         DomainDNSName: !Ref 'DomainDNSName'
-        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
         ADServer1NetBIOSName: !Ref 'ADServer1NetBIOSName'
         ADServer2NetBIOSName: !Ref 'ADServer2NetBIOSName'
         EnableWorkDocs: !Ref 'EnableWorkDocs'

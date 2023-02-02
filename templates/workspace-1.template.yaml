@@ -16,8 +16,12 @@ Metadata:
         - W9006
         - W9002
         - W9003
+        - W3037
+        - E2507
+        - W2511
       ignore_reason:
         - "Execution part SSM Automation"
+        - "IAM resources policy permissions"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -128,13 +132,6 @@ Parameters:
     Description: Fully qualified domain name (FQDN) of forest root domain (example-demo.com).
     MaxLength: '255'
     MinLength: '2'
-    Type: String
-  DomainNetBIOSName:
-    AllowedPattern: '[a-zA-Z0-9\-]+'
-    Default: DEMO
-    Description: NetBIOS name of domain (up to 15 characters) for users of earlier versions of Windows (example-DEMO).
-    MaxLength: '15'
-    MinLength: '1'
     Type: String
   DomainUser:
     AllowedPattern: '[a-zA-Z0-9]*'
@@ -2038,6 +2035,13 @@ Resources:
     DependsOn:
       - WaitCondition
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3037*
+            - E2507
+            - W2511
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -2113,44 +2117,47 @@ Resources:
             - workspaces:ModifyWorkspaceAccessProperties
             - workspaces:ModifyWorkspaceCreationProperties
             - workspaces:RestoreWorkspace
-            - ds:Accept*
-            - ds:Add*
-            - ds:Authorize*
-            - ds:Cancel*
-            - ds:Check*
-            - ds:Connect*
-            - ds:Create*
-            - ds:Delete*
-            - ds:Update*
-            - ds:Disable*
-            - ds:Enable*
-            - ds:Get*
-            - ds:List*
-            - ds:Register*
-            - ds:Reject*
-            - ds:Remove*
-            - ds:Reset*
-            - ds:Restore*
-            - ds:Sahre*
-            - ds:Start*
-            - ds:Unauthorize*
-            - ds:Unshare*
-            - ds:Verify*
+            - ds:AuthorizeApplication
+            - ds:UnauthorizeApplication
+            - ds:ConnectDirectory
+            - ds:DeleteDirectory
+            - ds:UpdateRadius
+            - ds:UpdateSettings
+            - ds:DisableRadius
+            - ds:EnableRadius
+            - ds:RemoveIpRoutes
+            - ds:VerifyTrust
             Resource:
               - !Join ['',['arn:',!Ref AWS::Partition,':workspaces:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!GetAtt WSDirectoryId.Value]]
               - !Join ['',['arn:',!Ref AWS::Partition,':ds:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!GetAtt WSDirectoryId.Value]]
           - Effect: Allow
             Action:
-            - workspaces:Describe*
-            - ds:Describe*
-            - ec2:Describe*
-            - sns:List*
-            - sns:Get*
+            - workspaces:DescribeWorkspaces
+            - workspaces:DescribeTags
+            - workspaces:DescribeWorkspaceDirectories
+            - ds:DescribeDirectories
+            - ec2:DescribeInternetGateways
+            - ec2:DescribeSecurityGroups
+            - ec2:DescribeRouteTables
+            - ec2:DescribeVpcs
+            - ec2:DescribeSubnets
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DescribeAvailabilityZones
+            - sns:ListSubscriptions
+            - sns:ListTopics
+            - sns:GetSubscriptionAttributes
             - kms:ListKeys
             - kms:ListAliases
-            - organizations:Describe*
-            - organizations:List*
+            # - organizations:Describe*
+            # - organizations:List*
             Resource: '*'
+          - Effect: Allow
+            Action:
+            - sns:ListSubscriptionsByTopic
+            - sns:GetTopicAttributes
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*
+            
 Outputs:
   WorkspacesRegistrationCode:
     Description: Registration code of launched WorkSpace.

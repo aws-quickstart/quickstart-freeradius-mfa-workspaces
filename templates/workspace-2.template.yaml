@@ -88,14 +88,6 @@ Metadata:
         MinLength: 3
         MaxLength: 63
         Type: 'String'
-      QSS3BucketRegion:
-        Default: us-east-1
-        Description: >-
-          AWS Region where the S3 bucket (QSS3BucketName) is hosted. Keep 
-          the default Region unless you are customizing the template. Changing the Region 
-          updates code references to point to a new location. When using your own bucket, 
-          specify the Region.
-        Type: String
       QSS3KeyPrefix:
         AllowedPattern: ^([0-9a-zA-Z!-_\.\*'\(\)/]+/)*$
         ConstraintDescription: >-
@@ -1252,42 +1244,46 @@ Resources:
             - workspaces:ModifyWorkspaceAccessProperties
             - workspaces:ModifyWorkspaceCreationProperties
             - workspaces:RestoreWorkspace
-            - ds:Accept*
-            - ds:Add*
-            - ds:Authorize*
-            - ds:Cancel*
-            - ds:Check*
-            - ds:Connect*
-            - ds:Create*
-            - ds:Delete*
-            - ds:Update*
-            - ds:Disable*
-            - ds:Enable*
-            - ds:Get*
-            - ds:List*
-            - ds:Register*
-            - ds:Reject*
-            - ds:Remove*
-            - ds:Reset*
-            - ds:Restore*
-            - ds:Share*
-            - ds:Start*
-            - ds:Unauthorize*
-            - ds:Unshare*
-            - ds:Verify*
+            - ds:AuthorizeApplication
+            - ds:UnauthorizeApplication
+            - ds:ConnectDirectory
+            - ds:DeleteDirectory
+            - ds:UpdateRadius
+            - ds:UpdateSettings
+            - ds:DisableRadius
+            - ds:EnableRadius
+            - ds:RemoveIpRoutes
+            - ds:VerifyTrust
             Resource:
               - !Join ['',['arn:',!Ref AWS::Partition,':workspaces:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!Ref DirectoryID]]
               - !Join ['',['arn:',!Ref AWS::Partition,':ds:',!Ref AWS::Region,':', !Ref AWS::AccountId,':','directory/',!Ref DirectoryID]]
           - Effect: Allow
             Action:
-            - workspaces:Describe*
-            - ds:Describe*
-            - ec2:Describe*
-            - sns:List*
-            - sns:Get*
-            - organizations:Describe*
-            - organizations:List*
+            - workspaces:DescribeWorkspaces
+            - workspaces:DescribeTags
+            - workspaces:DescribeWorkspaceDirectories
+            - ds:DescribeDirectories
+            - ec2:DescribeInternetGateways
+            - ec2:DescribeSecurityGroups
+            - ec2:DescribeRouteTables
+            - ec2:DescribeVpcs
+            - ec2:DescribeSubnets
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DescribeAvailabilityZones
+            - sns:ListSubscriptions
+            - sns:ListTopics
+            - sns:GetSubscriptionAttributes
+            - kms:ListKeys
+            - kms:ListAliases
+            # - organizations:Describe*
+            # - organizations:List*
             Resource: '*'
+          - Effect: Allow
+            Action:
+            - sns:ListSubscriptionsByTopic
+            - sns:GetTopicAttributes
+            Resource:
+            - Fn::Sub: arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:*
 
 Outputs:
   WorkspacesRegistrationCode:
