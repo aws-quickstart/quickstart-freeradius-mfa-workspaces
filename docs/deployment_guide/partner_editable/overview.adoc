@@ -1,4 +1,6 @@
-This Quick Start deploys {partner-product-name} on the AWS Cloud. This guide covers the steps necessary to deploy this Quick Start.
+This guide covers information you need to deploy {partner-product-name} solution on the AWS Cloud. 
+
+For additional information about the product, refer to https://freeradius.org/[FreeRADIUS^].
 
 // For advanced information about the product, troubleshooting, or additional functionality, refer to the https://{quickstart-github-org}.github.io/{quickstart-project-name}/operational/index.html[Operational Guide^].
 

@@ -1,13 +1,13 @@
-:quickstart-project-name: quickstart-freeradius-mfa-workspaces
-:quickstart-github-org: aws-quickstart
-:partner-product-name: FreeRADIUS MFA with Amaon WorkSpaces
+:partner-solution-project-name: quickstart-freeradius-mfa-workspaces
+:partner-solution-github-org: aws-quickstart
+:partner-product-name: FreeRADIUS MFA with Amazon WorkSpaces
 :partner-product-short-name: FreeRADIUS MFA with Amazon WorkSpaces
 // :partner-company-name: Example Company Name, Ltd.
-:doc-month: November
-:doc-year: 2022
+:doc-month: February
+:doc-year: 2023
 //:partner-contributors: John Smith, {partner-company-name}
 // :other-contributors: Akua Mansa, Trek10
-:aws-contributors: Adeleke Coker, Hammad Raza, Charles Meruwoma, AWS Solutions Architecture and Support Engineering Teams 
+:aws-contributors: Adeleke Coker, Hammad Raza, and Charles Meruwoma, AWS Solutions Architecture and Support Engineering teams 
 // :aws-ia-contributors: Toni Jones, AWS Integration & Automation team
 :deployment_time: 130 minutes
 :default_deployment_region: us-east-1
