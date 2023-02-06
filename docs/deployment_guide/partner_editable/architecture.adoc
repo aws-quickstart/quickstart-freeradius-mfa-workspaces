@@ -49,7 +49,7 @@ As shown in <<architecture1>>, this solution sets up the following:
 === Scenario 2: Deploy {partner-product-name} and AWS Managed Microsoft AD
 Scenario 2 is similar to scenario 1, but it includes AWS Managed Microsoft AD to provision and manage Active Directory Domain Services (AD DS) on the AWS Cloud. Instead of fully managing Active Directory Domain Services (AD DS) yourself, you rely on AWS Directory Service for tasks such as building a highly available directory topology, monitoring domain controllers, and configuring backups and snapshots.
 
-AWS Directory Service deploys Active Directory Domain Services (AD DS) across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information, see https://aws.amazon.com/directoryservice/[AWS Directory Service^] and http://aws.amazon.com/documentation/directory-service/[AWS Directory Service Documentation^].
+AWS Directory Service deploys Active Directory Domain Services (AD DS) across multiple Availability Zones, and automatically detects and replaces domain controllers that fail. AWS Directory Service also handles time-consuming tasks such as patch management, software updates, data replication, snapshot backups, replication monitoring, and point-in-time restores. For more information, refer to https://aws.amazon.com/directoryservice/[AWS Directory Service^] and http://aws.amazon.com/documentation/directory-service/[AWS Directory Service Documentation^].
 
 [#architecture2]
 .Scenario 2–Solution architecture for {partner-product-name} on AWS
